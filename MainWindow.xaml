@@ -1,0 +1,106 @@
+<Window x:Class="UnrealManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:UnrealManager.ViewModels"
+        xmlns:v="clr-namespace:UnrealManager.Views"
+        Title="Source Manager for Unreal Engine" Icon="Assets/app.ico" Height="820" Width="1240"
+        MinHeight="640" MinWidth="1000"
+        Background="{StaticResource BgBrush}"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <v:SelectedToBrushConverter x:Key="NavHighlight"/>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="230"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="20,22,20,18">
+                    <TextBlock Text="USM" FontFamily="Segoe UI Black" FontSize="20"
+                               Foreground="{StaticResource TextBrush}"/>
+                    <TextBlock Text="Source Manager" FontSize="12" Foreground="{StaticResource AccentBrush}"
+                               FontFamily="Segoe UI Semibold"/>
+                    <TextBlock Text="for Unreal Engine" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                </StackPanel>
+
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding Pages}" Margin="10,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <RadioButton GroupName="Nav" Margin="0,3" Cursor="Hand"
+                                         Command="{Binding DataContext.SelectCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                         CommandParameter="{Binding}">
+                                <RadioButton.Template>
+                                    <ControlTemplate TargetType="RadioButton">
+                                        <Border x:Name="b" CornerRadius="8" Padding="12,10">
+                                            <Border.Background>
+                                                <MultiBinding Converter="{StaticResource NavHighlight}">
+                                                    <Binding/>
+                                                    <Binding Path="DataContext.CurrentPage" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                                </MultiBinding>
+                                            </Border.Background>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Icon}" FontSize="16" Width="28"/>
+                                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
+                                                           FontFamily="Segoe UI Semibold" FontSize="13"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="b" Property="Background" Value="{StaticResource PanelAltBrush}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </RadioButton.Template>
+                            </RadioButton>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel Grid.Row="2" Margin="20,0,20,18">
+                    <Border Background="{StaticResource PanelAltBrush}" CornerRadius="8" Padding="12,10">
+                        <StackPanel>
+                            <TextBlock Text="Workflow" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                            <TextBlock FontSize="11" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0"
+                                       Text="Dependencies → Get Source → Build → Perforce → Sync &amp; Launch"/>
+                        </StackPanel>
+                    </Border>
+                    <Button Content="🐞  Report a bug" Margin="0,10,0,0" HorizontalAlignment="Stretch"
+                            FontSize="12" Click="OnReportBug"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Content + log -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" MinHeight="240"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="220" MinHeight="120"/>
+            </Grid.RowDefinitions>
+
+            <ContentControl Grid.Row="0" Content="{Binding CurrentPage}" Margin="24,20,24,8"/>
+
+            <GridSplitter Grid.Row="1" Height="6" HorizontalAlignment="Stretch"
+                          Background="Transparent" VerticalAlignment="Center"/>
+
+            <v:LogConsole Grid.Row="2" Margin="24,0,24,20"/>
+        </Grid>
+    </Grid>
+</Window>

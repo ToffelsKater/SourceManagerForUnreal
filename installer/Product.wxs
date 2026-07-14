@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Source Manager for Unreal Engine installer (WiX).
+  Per-user MSI: no admin rights needed, installs to %LocalAppData%\Programs,
+  creates Start Menu + desktop shortcuts, uninstalls via Apps & Features.
+
+  IMPORTANT: UpgradeCode must never change — it is how newer installers
+  find and replace older installs.
+
+  Build with:  .\build-installer.ps1   (repo root)
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Source Manager for Unreal Engine"
+           Manufacturer="Source Manager Community Tool"
+           Version="1.0.0"
+           UpgradeCode="3EE50ECD-C74B-44E5-8488-DF6D92112DB3"
+           Scope="perUser"
+           InstallerVersion="500"
+           Compressed="yes">
+
+    <SummaryInformation Description="Source Manager for Unreal Engine — source build &amp; Perforce workflow tool"/>
+
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
+                  DowngradeErrorMessage="A newer version of Source Manager is already installed."/>
+    <MediaTemplate EmbedCab="yes"/>
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="Source Manager for Unreal Engine"/>
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder"/>
+    <StandardDirectory Id="DesktopFolder"/>
+
+    <Component Id="MainExecutable" Directory="INSTALLFOLDER" Guid="61F1D4D6-F04C-4BC6-A476-3F6049629DAF">
+      <!-- Per-user components use an HKCU registry value as the key path. -->
+      <RegistryValue Root="HKCU" Key="Software\UnrealSourceManager"
+                     Name="InstallDir" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes"/>
+
+      <File Id="UnrealManagerExe" Source="!(bindpath.dist)\UnrealManager.exe" Name="UnrealManager.exe"/>
+
+      <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder"
+                Name="Source Manager for Unreal Engine"
+                Description="Unreal Engine source build &amp; Perforce workflow tool"
+                Target="[INSTALLFOLDER]UnrealManager.exe"
+                WorkingDirectory="INSTALLFOLDER"/>
+      <Shortcut Id="DesktopShortcut" Directory="DesktopFolder"
+                Name="Source Manager for Unreal Engine"
+                Target="[INSTALLFOLDER]UnrealManager.exe"
+                WorkingDirectory="INSTALLFOLDER"/>
+
+      <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall"/>
+    </Component>
+
+  </Package>
+</Wix>

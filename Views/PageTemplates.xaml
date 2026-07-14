@@ -1,0 +1,430 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="clr-namespace:UnrealManager.ViewModels"
+                    xmlns:v="clr-namespace:UnrealManager.Views">
+
+    <v:BoolToVisibilityConverter x:Key="BoolVis"/>
+    <v:InvertBoolConverter x:Key="InvertBool"/>
+    <v:StringToVisibilityConverter x:Key="StrVis"/>
+    <v:StringToBrushConverter x:Key="StrBrush"/>
+
+    <!-- Shared status/progress strip -->
+    <ControlTemplate x:Key="StatusStrip">
+        <Border Background="{StaticResource PanelAltBrush}" CornerRadius="8" Padding="12,8" Margin="0,0,0,12"
+                Visibility="{Binding Status, Converter={StaticResource StrVis}}">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="●" Foreground="{StaticResource AccentBrush}" Margin="0,0,8,0"
+                               Visibility="{Binding IsBusy, Converter={StaticResource BoolVis}}"/>
+                    <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextBrush}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </ControlTemplate>
+
+    <!-- ============================ GUIDE / TUTORIAL ============================ -->
+    <DataTemplate DataType="{x:Type vm:TutorialViewModel}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="4" MaxWidth="900" HorizontalAlignment="Left">
+                <TextBlock Text="Guide" Style="{StaticResource HeaderText}"/>
+                <TextBlock Style="{StaticResource SubHeaderText}"
+                           Text="What this tool does and how to go from an empty PC to a running source-built Unreal Editor."/>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock FontFamily="Segoe UI Semibold" FontSize="14" Text="What is Source Manager?" Margin="0,0,0,6"/>
+                        <TextBlock Margin="0,2">
+                            It walks you through the complete Unreal Engine source-build workflow: it checks and installs the
+                            required tools, downloads the engine source from Epic's GitHub, compiles the editor, keeps your
+                            project in sync via Perforce, and launches everything with one button.
+                        </TextBlock>
+                        <TextBlock Margin="0,6,0,0" Foreground="{StaticResource MutedBrush}">
+                            Every long operation streams its output to the log at the bottom. All settings are saved
+                            automatically per user (nothing is shared or uploaded). You can cancel any running operation.
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock FontFamily="Segoe UI Semibold" FontSize="14" Text="First-time setup on a new workstation" Margin="0,0,0,8"/>
+                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="1  "/><Run FontFamily="Segoe UI Semibold" Text="Dependencies"/><Run Text=" — press Install on every red row (Git, Perforce). No Visual Studio? Use 'Install VS 2022 Community' — it selects all Unreal-required workloads for you. Big download, grab a coffee."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="2  "/><Run FontFamily="Segoe UI Semibold" Text="GitHub access"/><Run Text=" — the engine source is in a private repository: link your GitHub account to your Epic Games account ('Link GitHub to Epic' button on the Get Source tab) and accept the invitation e-mail from GitHub. 'Test GitHub access' tells you when it works."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="3  "/><Run FontFamily="Segoe UI Semibold" Text="Get Source"/><Run Text=" — pick an engine folder (needs ~200 GB free) and a branch (e.g. 5.8, or 'release' for the latest stable), then 'Clone + Setup + Generate'. This downloads tens of GB and takes a while; the log shows progress."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="4  "/><Run FontFamily="Segoe UI Semibold" Text="Build"/><Run Text=" — target 'UnrealEditor', configuration 'Development', press Build. A clean build takes 1–3 hours depending on CPU. ShaderCompileWorker is built automatically."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="5  "/><Run FontFamily="Segoe UI Semibold" Text="Perforce"/><Run Text=" — enter the team's server address, your user name and password, log in, then pick your workspace (create workspaces in P4V — button provided)."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="6  "/><Run FontFamily="Segoe UI Semibold" Text="Sync &amp; Launch"/><Run Text=" — select your .uproject, tick the steps you want, and use '🔍 Sanity check' to verify everything before the first run."/></TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock FontFamily="Segoe UI Semibold" FontSize="14" Text="The tabs in detail" Margin="0,0,0,8"/>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔧 Dependencies"/><Run Text=" — verifies Git, Perforce and Visual Studio incl. every workload Unreal needs (C++ desktop &amp; game development, MSVC v143, Windows SDK). One click installs whatever is missing."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="⬇ Get Source"/><Run Text=" — clones Epic's UnrealEngine repository, runs Setup.bat (downloads binary dependencies) and GenerateProjectFiles.bat (creates UE5.sln). Steps can also be run individually, e.g. to re-run Setup.bat after switching branches."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔨 Build"/><Run Text=" — compiles any engine target (editor, ShaderCompileWorker, UnrealPak, …) in any configuration with live progress. 'Open UE5.sln' jumps into Visual Studio for engine code work."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔁 Perforce"/><Run Text=" — connection, login (your password is never stored — only Perforce's own session ticket), workspace selection and manual sync with force/parallel options."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🚀 Sync &amp; Launch"/><Run Text=" — the daily-driver button: sync latest from Perforce → rebuild engine → rebuild your project's modules → launch the editor. Each step is optional; most days you only need sync + launch."/></TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock FontFamily="Segoe UI Semibold" FontSize="14" Text="Troubleshooting" Margin="0,0,0,8"/>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="'Missing Modules' when opening a project"/><Run Text=" — the project was built with a different engine version (e.g. the launcher build). Enable step 3 'Rebuild project modules' on Sync &amp; Launch. Marketplace plugins installed into the launcher engine must be copied into the project's Plugins folder first."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="First project start takes forever"/><Run Text=" — the editor compiles thousands of shaders on first load. Normal, one-time; results are cached."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="'Test GitHub access' fails"/><Run Text=" — your GitHub account is not linked to Epic yet, or you haven't accepted GitHub's organization invitation e-mail."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="Perforce suddenly asks for login again"/><Run Text=" — session tickets expire; just log in again on the Perforce tab. The Sanity check spots this."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="Not sure what's wrong?"/><Run Text=" — run '🔍 Sanity check' on Sync &amp; Launch: it tests the whole chain and tells you exactly which tab fixes each problem. The Output Log at the bottom always has the full details."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="Found a bug?"/><Run Text=" — the '🐞 Report a bug' button (bottom left) opens a pre-filled issue with your recent log attached, and copies the full report to your clipboard."/></TextBlock>
+                        <TextBlock Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}"
+                                   Text="Settings file: %AppData%\UnrealManager\config.json (per user — safe to delete to reset the app)."/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!-- ============================ DEPENDENCIES ============================ -->
+    <DataTemplate DataType="{x:Type vm:DependenciesViewModel}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="4">
+                <TextBlock Text="Dependencies" Style="{StaticResource HeaderText}"/>
+                <TextBlock Style="{StaticResource SubHeaderText}"
+                           Text="Everything Unreal Engine needs to compile from source. Green = ready, red = required and missing, amber = optional."/>
+
+                <Control Template="{StaticResource StatusStrip}"/>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <Button Content="↻  Refresh" Command="{Binding RefreshCommand}"/>
+                    <Button Content="⬇  Install VS 2022 Community" Command="{Binding InstallVsCommand}"/>
+                </StackPanel>
+
+                <TextBlock Text="Command-line tools" Style="{StaticResource SectionText}"/>
+                <Border Style="{StaticResource Card}">
+                    <ItemsControl ItemsSource="{Binding ToolChecks}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="26"/>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Glyph}" FontSize="15"
+                                               Foreground="{Binding GlyphColor, Converter={StaticResource StrBrush}}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="{StaticResource MutedBrush}"
+                                               VerticalAlignment="Center"/>
+                                    <Button Grid.Column="3" Content="⬇ Install" Padding="10,4" FontSize="12" Margin="8,0,0,0"
+                                            Visibility="{Binding ShowInstall, Converter={StaticResource BoolVis}}"
+                                            Command="{Binding DataContext.InstallToolCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+
+                <TextBlock Text="Visual Studio" Style="{StaticResource SectionText}"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="Instance:" VerticalAlignment="Center" Margin="0,0,8,0"
+                               Foreground="{StaticResource MutedBrush}"/>
+                    <ComboBox Width="380" ItemsSource="{Binding VsInstances}"
+                              SelectedItem="{Binding SelectedInstance}"/>
+                </StackPanel>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <ItemsControl ItemsSource="{Binding VsChecks}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="26"/>
+                                            <ColumnDefinition Width="360"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Glyph}" FontSize="15"
+                                                   Foreground="{Binding GlyphColor, Converter={StaticResource StrBrush}}"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="{StaticResource MutedBrush}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Content="⚙  Install missing components" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding InstallMissingCommand}" HorizontalAlignment="Left" Margin="0,12,0,0"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!-- ============================ GET SOURCE ============================ -->
+    <DataTemplate DataType="{x:Type vm:SourceViewModel}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="4">
+                <TextBlock Text="Get Source" Style="{StaticResource HeaderText}"/>
+                <TextBlock Style="{StaticResource SubHeaderText}"
+                           Text="Clone the Unreal Engine source, download binary dependencies (Setup.bat), and generate project files."/>
+
+                <Control Template="{StaticResource StatusStrip}"/>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="GitHub repository" Style="{StaticResource LabelText}"/>
+                        <TextBox Text="{Binding RemoteUrl, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="180"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Branch" Style="{StaticResource LabelText}"/>
+                                <ComboBox IsEditable="True" ItemsSource="{Binding Branches}"
+                                          Text="{Binding Branch, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
+                                <CheckBox Content="Shallow clone (faster)" IsChecked="{Binding ShallowClone}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button Content="Test GitHub access" Command="{Binding TestAccessCommand}"/>
+                            <Button Content="Fetch branches" Command="{Binding FetchBranchesCommand}"/>
+                            <Button Content="Link GitHub to Epic ↗" Command="{Binding OpenGitHubDocsCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Engine folder" Style="{StaticResource LabelText}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding EngineRoot, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button Grid.Column="1" Content="Browse…" Command="{Binding BrowseCommand}" Margin="8,0,0,0"/>
+                        </Grid>
+                        <TextBlock Text="{Binding EngineRootState}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding DiskInfo}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Run" Style="{StaticResource LabelText}"/>
+                        <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,10"
+                                   Text="Do it all in one go, or run each step individually."/>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="▶  Clone + Setup + Generate"
+                                    Style="{StaticResource PrimaryButton}" Command="{Binding RunAllCommand}"/>
+                            <Button Content="1. Clone" Command="{Binding CloneCommand}"/>
+                            <Button Content="2. Setup.bat" Command="{Binding SetupCommand}"/>
+                            <Button Content="3. Generate project files" Command="{Binding GenerateCommand}"/>
+                            <Button Content="✖ Cancel" Command="{Binding CancelCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!-- ============================ BUILD ============================ -->
+    <DataTemplate DataType="{x:Type vm:BuildViewModel}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="4">
+                <TextBlock Text="Build" Style="{StaticResource HeaderText}"/>
+                <TextBlock Style="{StaticResource SubHeaderText}"
+                           Text="Compile the engine target with UnrealBuildTool. A first full editor build can take 1–3 hours."/>
+
+                <Control Template="{StaticResource StatusStrip}"/>
+
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Target" Style="{StaticResource LabelText}"/>
+                            <ComboBox ItemsSource="{Binding Targets}" SelectedItem="{Binding Target}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Configuration" Style="{StaticResource LabelText}"/>
+                            <ComboBox ItemsSource="{Binding Configurations}" SelectedItem="{Binding Configuration}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <ProgressBar Value="{Binding Progress, Mode=OneWay}" Maximum="100"
+                                     IsIndeterminate="{Binding ProgressKnown, Converter={StaticResource InvertBool}, Mode=OneWay}"
+                                     Margin="0,0,0,12"
+                                     Visibility="{Binding IsBusy, Converter={StaticResource BoolVis}}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="🔨  Build" Style="{StaticResource PrimaryButton}" Command="{Binding BuildCommand}"/>
+                            <Button Content="✖ Cancel" Command="{Binding CancelCommand}"/>
+                            <Button Content="Open UE5.sln" Command="{Binding OpenSolutionCommand}"/>
+                            <Button Content="Open engine folder" Command="{Binding OpenFolderCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!-- ============================ PERFORCE ============================ -->
+    <DataTemplate DataType="{x:Type vm:PerforceViewModel}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="4">
+                <TextBlock Text="Perforce" Style="{StaticResource HeaderText}"/>
+                <TextBlock Style="{StaticResource SubHeaderText}"
+                           Text="Connect to a Helix Core (Perforce) server, log in, pick a workspace, and sync."/>
+
+                <Control Template="{StaticResource StatusStrip}"/>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Server (P4PORT)" Style="{StaticResource LabelText}"/>
+                                <TextBox Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="User (P4USER)" Style="{StaticResource LabelText}"/>
+                                <TextBox Text="{Binding User, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Password" Style="{StaticResource LabelText}" Margin="0,10,0,3"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <PasswordBox Grid.Column="0" x:Name="P4Password"/>
+                            <Button Grid.Column="1" Content="Log in" Margin="8,0,0,0"
+                                    Command="{Binding LoginCommand}"
+                                    CommandParameter="{Binding ElementName=P4Password}"/>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="Test connection" Command="{Binding TestCommand}"/>
+                            <Button Content="List workspaces" Command="{Binding ListClientsCommand}"/>
+                            <Button Content="Open P4V ↗" Command="{Binding OpenP4VCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Workspace (P4CLIENT)" Style="{StaticResource LabelText}"/>
+                        <ComboBox IsEditable="True" ItemsSource="{Binding Clients}"
+                                  Text="{Binding Client, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock Text="Sync path (optional, e.g. //depot/project/...)" Style="{StaticResource LabelText}" Margin="0,10,0,3"/>
+                        <TextBox Text="{Binding SyncPath, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <CheckBox Content="Force sync (-f)" IsChecked="{Binding ForceSync}" Margin="0,0,16,0"/>
+                            <CheckBox Content="Parallel sync (8 threads)" IsChecked="{Binding ParallelSync}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="🔁  Sync now" Style="{StaticResource PrimaryButton}" Command="{Binding SyncCommand}"/>
+                            <Button Content="✖ Cancel" Command="{Binding CancelCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!-- ============================ SYNC & LAUNCH ============================ -->
+    <DataTemplate DataType="{x:Type vm:SyncLaunchViewModel}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="4">
+                <TextBlock Text="Sync &amp; Launch" Style="{StaticResource HeaderText}"/>
+                <TextBlock Style="{StaticResource SubHeaderText}"
+                           Text="One button: pull the latest from Perforce, rebuild changed engine code, and open the editor — the classic UGS workflow."/>
+
+                <Control Template="{StaticResource StatusStrip}"/>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Steps" Style="{StaticResource LabelText}"/>
+                        <CheckBox Content="1.  Sync latest from Perforce" IsChecked="{Binding StepSync}"/>
+                        <CheckBox Content="2.  Build engine target" IsChecked="{Binding StepBuild}"/>
+                        <CheckBox Content="3.  Rebuild project modules (fixes 'Missing Modules' for projects from other engine versions)"
+                                  IsChecked="{Binding StepBuildProject}"/>
+                        <CheckBox Content="4.  Launch editor" IsChecked="{Binding StepLaunch}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Project (.uproject) — optional" Style="{StaticResource LabelText}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding ProjectPath, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button Grid.Column="1" Content="Browse…" Command="{Binding BrowseProjectCommand}" Margin="8,0,0,0"/>
+                        </Grid>
+
+                        <TextBlock Text="Extra launch arguments" Style="{StaticResource LabelText}" Margin="0,10,0,3"/>
+                        <TextBox Text="{Binding LaunchArgs, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding StepStatus}" Foreground="{StaticResource AccentBrush}"
+                                   FontFamily="Segoe UI Semibold" Margin="0,0,0,10"
+                                   Visibility="{Binding StepStatus, Converter={StaticResource StrVis}}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="🚀  Sync &amp; Launch" Style="{StaticResource PrimaryButton}" Command="{Binding RunCommand}"/>
+                            <Button Content="🔍  Sanity check" Command="{Binding SanityCheckCommand}"/>
+                            <Button Content="✖ Cancel" Command="{Binding CancelCommand}"/>
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding SanityResults}" Margin="0,14,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="26"/>
+                                            <ColumnDefinition Width="240"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Glyph}" FontSize="15"
+                                                   Foreground="{Binding GlyphColor, Converter={StaticResource StrBrush}}"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="{StaticResource MutedBrush}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+</ResourceDictionary>
