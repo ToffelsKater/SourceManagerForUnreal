@@ -106,6 +106,39 @@ public static class EngineService
                Directory.EnumerateFiles(sourceDir, "*.Target.cs").Any();
     }
 
+    /// <summary>
+    /// Where UnrealBuildTool puts the built server exe. Development builds have no suffix;
+    /// every other configuration is "&lt;Target&gt;-&lt;Platform&gt;-&lt;Configuration&gt;.exe".
+    /// </summary>
+    public static string ServerExePath(string projectPath, string targetName, string platform, string configuration)
+    {
+        var exe = configuration == "Development"
+            ? targetName + ".exe"
+            : $"{targetName}-{platform}-{configuration}.exe";
+        return Path.Combine(Path.GetDirectoryName(projectPath)!, "Binaries", platform, exe);
+    }
+
+    /// <summary>
+    /// Launches the dedicated server detached, passing the .uproject first (uncooked/dev run)
+    /// followed by the user's arguments (map name, -log, -port=..., etc.).
+    /// </summary>
+    public static void LaunchServer(string projectPath, string exePath, string? extraArgs)
+    {
+        if (!File.Exists(exePath))
+            throw new FileNotFoundException("Server executable not found - build the dedicated server first.", exePath);
+
+        var args = $"\"{projectPath}\"";
+        if (!string.IsNullOrWhiteSpace(extraArgs)) args += " " + extraArgs;
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = exePath,
+            Arguments = args,
+            UseShellExecute = true,
+            WorkingDirectory = Path.GetDirectoryName(exePath)!,
+        });
+    }
+
     /// <summary>The project's dedicated-server target from Source/*Server.Target.cs, or null when absent.</summary>
     public static string? FindServerTargetName(string projectPath)
     {

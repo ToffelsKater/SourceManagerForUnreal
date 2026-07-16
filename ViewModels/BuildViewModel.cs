@@ -27,7 +27,13 @@ public sealed partial class BuildViewModel : PageViewModel
     public string Configuration
     {
         get => ConfigService.Config.BuildConfiguration;
-        set { ConfigService.Config.BuildConfiguration = value; ConfigService.Save(); OnPropertyChanged(); }
+        set
+        {
+            ConfigService.Config.BuildConfiguration = value;
+            ConfigService.Save();
+            OnPropertyChanged();
+            RefreshServerStatus(); // the built-server exe name depends on the configuration
+        }
     }
 
     private double _progress;
@@ -43,6 +49,7 @@ public sealed partial class BuildViewModel : PageViewModel
     public ICommand BrowseProjectCommand { get; }
     public ICommand CreateServerTargetCommand { get; }
     public ICommand BuildServerCommand { get; }
+    public ICommand LaunchServerCommand { get; }
     public ICommand OpenServerOutputCommand { get; }
 
     [GeneratedRegex(@"^\[(\d+)/(\d+)\]")]
@@ -65,6 +72,7 @@ public sealed partial class BuildViewModel : PageViewModel
         BuildServerCommand = new AsyncRelayCommand(_ => BuildServerAsync(),
             _ => !IsBusy && ProjectSet && EngineService.FindServerTargetName(ProjectPath) is not null &&
                  EngineService.IsEngineRoot(ConfigService.Config.EngineRoot));
+        LaunchServerCommand = new RelayCommand(_ => LaunchServer(), _ => ServerExeExists);
         OpenServerOutputCommand = new RelayCommand(_ => OpenServerOutput(),
             _ => ProjectSet && Directory.Exists(ServerOutputDir));
         RefreshServerStatus();
@@ -92,6 +100,26 @@ public sealed partial class BuildViewModel : PageViewModel
     private string _serverStatus = "";
     public string ServerStatus { get => _serverStatus; private set => Set(ref _serverStatus, value); }
 
+    public string ServerLaunchArgs
+    {
+        get => ConfigService.Config.ServerLaunchArgs;
+        set { ConfigService.Config.ServerLaunchArgs = value; ConfigService.Save(); OnPropertyChanged(); }
+    }
+
+    private string? CurrentServerExe
+    {
+        get
+        {
+            if (!ProjectSet) return null;
+            var target = EngineService.FindServerTargetName(ProjectPath);
+            if (target is null) return null;
+            return EngineService.ServerExePath(
+                ProjectPath, target, ConfigService.Config.BuildPlatform, Configuration);
+        }
+    }
+
+    private bool ServerExeExists => CurrentServerExe is not null && File.Exists(CurrentServerExe);
+
     private void RefreshServerStatus()
     {
         if (!ProjectSet)
@@ -106,9 +134,14 @@ public sealed partial class BuildViewModel : PageViewModel
             return;
         }
         var target = EngineService.FindServerTargetName(ProjectPath);
-        ServerStatus = target is null
-            ? "No server target yet - click 'Create server target' to add <Name>Server.Target.cs."
-            : $"Server target found: {target}. Ready to build.";
+        if (target is null)
+        {
+            ServerStatus = "No server target yet - click 'Create server target' to add <Name>Server.Target.cs.";
+            return;
+        }
+        ServerStatus = ServerExeExists
+            ? $"Server target: {target}. Built for {Configuration} - ready to launch."
+            : $"Server target: {target}. Not built yet for {Configuration}.";
     }
 
     private void BrowseProject()
@@ -177,6 +210,23 @@ public sealed partial class BuildViewModel : PageViewModel
             Log("For distribution you still need to cook/package content (UAT BuildCookRun -server).");
             RefreshServerStatus();
         });
+    }
+
+    private void LaunchServer()
+    {
+        var exe = CurrentServerExe;
+        if (exe is null) return;
+        LogHeader("Launch dedicated server");
+        try
+        {
+            EngineService.LaunchServer(ProjectPath, exe, ServerLaunchArgs);
+            Log($"Launched: {Path.GetFileName(exe)} \"{ProjectPath}\" {ServerLaunchArgs}".TrimEnd());
+            Log("Tip: without -log the server runs headless with no window. Common args: <MapName> -log -port=7777");
+        }
+        catch (Exception ex)
+        {
+            Log("ERROR: " + ex.Message);
+        }
     }
 
     private void OpenServerOutput()

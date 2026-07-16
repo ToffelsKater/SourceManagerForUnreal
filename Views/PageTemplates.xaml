@@ -298,12 +298,17 @@
                         </Grid>
 
                         <TextBlock Text="{Binding ServerStatus}" Foreground="{StaticResource MutedBrush}"
-                                   FontSize="12.5" Margin="0,8,0,12"/>
+                                   FontSize="12.5" Margin="0,8,0,10"/>
+
+                        <TextBlock Text="Launch arguments (the .uproject is passed automatically — e.g. MyMap -log -port=7777)"
+                                   Style="{StaticResource LabelText}"/>
+                        <TextBox Text="{Binding ServerLaunchArgs, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
 
                         <StackPanel Orientation="Horizontal">
                             <Button Content="⚙  Create server target" Command="{Binding CreateServerTargetCommand}"/>
                             <Button Content="🖥  Build dedicated server" Style="{StaticResource PrimaryButton}"
                                     Command="{Binding BuildServerCommand}"/>
+                            <Button Content="▶  Launch server" Command="{Binding LaunchServerCommand}"/>
                             <Button Content="Open output folder" Command="{Binding OpenServerOutputCommand}"/>
                         </StackPanel>
                     </StackPanel>

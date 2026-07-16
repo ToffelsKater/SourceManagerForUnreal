@@ -28,4 +28,5 @@ public sealed class AppConfig
     public bool StepLaunch { get; set; } = true;
     public string ProjectPath { get; set; } = "";
     public string LaunchArgs { get; set; } = "";
+    public string ServerLaunchArgs { get; set; } = "-log";
 }
