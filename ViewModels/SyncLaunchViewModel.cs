@@ -259,7 +259,7 @@ public sealed class SyncLaunchViewModel : PageViewModel
         {
             if (string.IsNullOrWhiteSpace(ProjectPath))
             {
-                Log("No project set — skipping project module rebuild.");
+                Log("No project set — skipping full project recompile.");
             }
             else if (!File.Exists(ProjectPath))
             {
@@ -268,21 +268,21 @@ public sealed class SyncLaunchViewModel : PageViewModel
             }
             else
             {
-                StepStatus = "Step: rebuilding project modules against this engine…";
+                StepStatus = "Step: full project recompile against this engine (clean + build)…";
                 if (!EngineService.IsEngineRoot(cfg.EngineRoot))
                 {
                     StepStatus = "Engine root not valid — set it on the Get Source tab.";
                     return;
                 }
-                var projBuild = await EngineService.BuildProjectAsync(
+                var projBuild = await EngineService.RebuildProjectAsync(
                     cfg.EngineRoot, ProjectPath, cfg.BuildPlatform, cfg.BuildConfiguration, Log, ct);
                 if (!projBuild.Success)
                 {
-                    StepStatus = $"Project rebuild failed (exit code {projBuild.ExitCode}) — aborting. " +
+                    StepStatus = $"Project recompile failed (exit code {projBuild.ExitCode}) — aborting. " +
                                  "Binary-only Fab/Marketplace plugins may need their source copied into the project's Plugins folder.";
                     return;
                 }
-                Log("Project modules rebuilt.");
+                Log("Project fully recompiled.");
             }
         }
 

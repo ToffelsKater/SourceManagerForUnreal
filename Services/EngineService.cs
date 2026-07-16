@@ -69,15 +69,17 @@ public static class EngineService
         => BuildAsync(root, "ShaderCompileWorker", "Win64", "Development", onOutput, ct);
 
     /// <summary>
-    /// Rebuilds a project's own modules and plugins against this engine — needed whenever a
+    /// Full recompile of a project's own modules and plugins against this engine — needed whenever a
     /// project made with another engine version (e.g. a launcher build) is opened in a source build.
+    /// Passes UnrealBuildTool's -Rebuild flag (clean + build), the same thing Rebuild.bat does, so
+    /// stale intermediates from the other engine version can't linger.
     /// </summary>
-    public static Task<ProcessResult> BuildProjectAsync(
+    public static Task<ProcessResult> RebuildProjectAsync(
         string root, string projectPath, string platform, string configuration,
         Action<string> onOutput, CancellationToken ct)
     {
         var targetName = FindEditorTargetName(projectPath);
-        var args = $"{targetName} {platform} {configuration} -Project=\"{projectPath}\" -WaitMutex";
+        var args = $"{targetName} {platform} {configuration} -Project=\"{projectPath}\" -Rebuild -WaitMutex";
         return ProcessRunner.RunBatchAsync(BuildBat(root), args, root, onOutput, ct);
     }
 

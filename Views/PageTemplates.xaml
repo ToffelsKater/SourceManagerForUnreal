@@ -71,7 +71,7 @@
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock FontFamily="Segoe UI Semibold" FontSize="14" Text="Troubleshooting" Margin="0,0,0,8"/>
-                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="'Missing Modules' when opening a project"/><Run Text=" — the project was built with a different engine version (e.g. the launcher build). Enable step 3 'Rebuild project modules' on Sync &amp; Launch. Marketplace plugins installed into the launcher engine must be copied into the project's Plugins folder first."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="'Missing Modules' when opening a project"/><Run Text=" — the project was built with a different engine version (e.g. the launcher build). Enable step 3 'Full project recompile' on Sync &amp; Launch. Marketplace plugins installed into the launcher engine must be copied into the project's Plugins folder first."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="First project start takes forever"/><Run Text=" — the editor compiles thousands of shaders on first load. Normal, one-time; results are cached."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="'Test GitHub access' fails"/><Run Text=" — your GitHub account is not linked to Epic yet, or you haven't accepted GitHub's organization invitation e-mail."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="Perforce suddenly asks for login again"/><Run Text=" — session tickets expire; just log in again on the Perforce tab. The Sanity check spots this."/></TextBlock>
@@ -371,7 +371,7 @@
                         <TextBlock Text="Steps" Style="{StaticResource LabelText}"/>
                         <CheckBox Content="1.  Sync latest from Perforce" IsChecked="{Binding StepSync}"/>
                         <CheckBox Content="2.  Build engine target" IsChecked="{Binding StepBuild}"/>
-                        <CheckBox Content="3.  Rebuild project modules (fixes 'Missing Modules' for projects from other engine versions)"
+                        <CheckBox Content="3.  Full project recompile (clean + build — fixes 'Missing Modules' for projects from other engine versions)"
                                   IsChecked="{Binding StepBuildProject}"/>
                         <CheckBox Content="4.  Launch editor" IsChecked="{Binding StepLaunch}"/>
                     </StackPanel>
