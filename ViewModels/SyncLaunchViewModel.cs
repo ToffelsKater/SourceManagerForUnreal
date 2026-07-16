@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Windows;
 using System.Windows.Input;
 using UnrealManager.Core;
 using UnrealManager.Services;
@@ -268,18 +269,37 @@ public sealed class SyncLaunchViewModel : PageViewModel
             }
             else
             {
-                StepStatus = "Step: full project recompile against this engine (clean + build)…";
                 if (!EngineService.IsEngineRoot(cfg.EngineRoot))
                 {
                     StepStatus = "Engine root not valid — set it on the Get Source tab.";
                     return;
                 }
-                var projBuild = await EngineService.RebuildProjectAsync(
-                    cfg.EngineRoot, ProjectPath, cfg.BuildPlatform, cfg.BuildConfiguration, Log, ct);
-                if (!projBuild.Success)
+
+                // Closing Visual Studio can destroy unsaved work, so never do it silently.
+                var vsRunning = ProjectRebuildService.GetRunning(ProjectRebuildService.VisualStudioProcesses);
+                var closeVs = false;
+                if (vsRunning.Length > 0)
                 {
-                    StepStatus = $"Project recompile failed (exit code {projBuild.ExitCode}) — aborting. " +
-                                 "Binary-only Fab/Marketplace plugins may need their source copied into the project's Plugins folder.";
+                    var answer = MessageBox.Show(
+                        $"A full recompile deletes this project's Visual Studio files, but {string.Join(", ", vsRunning)} " +
+                        "is running and holds them locked.\n\nClose it now? Any unsaved changes will be lost.\n\n" +
+                        "Cancel stops the recompile so you can save your work first.",
+                        "Full project recompile", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+                    if (answer != MessageBoxResult.OK)
+                    {
+                        StepStatus = "Cancelled — close Visual Studio yourself, then run again.";
+                        return;
+                    }
+                    closeVs = true;
+                }
+
+                LogHeader("Full project recompile");
+                var error = await ProjectRebuildService.FullRecompileAsync(
+                    cfg.EngineRoot, ProjectPath, cfg.BuildPlatform, cfg.BuildConfiguration,
+                    closeVs, Log, s => StepStatus = s, ct);
+                if (error is not null)
+                {
+                    StepStatus = "Full recompile failed — aborting. " + error;
                     return;
                 }
                 Log("Project fully recompiled.");

@@ -69,22 +69,28 @@ public static class EngineService
         => BuildAsync(root, "ShaderCompileWorker", "Win64", "Development", onOutput, ct);
 
     /// <summary>
-    /// Full recompile of a project's own modules and plugins against this engine — needed whenever a
-    /// project made with another engine version (e.g. a launcher build) is opened in a source build.
-    /// Passes UnrealBuildTool's -Rebuild flag (clean + build), the same thing Rebuild.bat does, so
-    /// stale intermediates from the other engine version can't linger.
+    /// Builds a project's own modules and plugins against this engine.
+    /// Callers wanting a clean, from-scratch compile should use
+    /// <see cref="ProjectRebuildService.FullRecompileAsync"/>, which wipes the generated
+    /// folders first — deleting them is what actually clears another engine version's leftovers.
     /// </summary>
-    public static Task<ProcessResult> RebuildProjectAsync(
+    public static Task<ProcessResult> BuildProjectAsync(
         string root, string projectPath, string platform, string configuration,
         Action<string> onOutput, CancellationToken ct)
     {
         var targetName = FindEditorTargetName(projectPath);
-        var args = $"{targetName} {platform} {configuration} -Project=\"{projectPath}\" -Rebuild -WaitMutex";
+        var args = $"{targetName} {platform} {configuration} -Project=\"{projectPath}\" -WaitMutex -FromMsBuild";
         return ProcessRunner.RunBatchAsync(BuildBat(root), args, root, onOutput, ct);
     }
 
+    /// <summary>Regenerates project files for a specific .uproject against this engine.</summary>
+    public static Task<ProcessResult> GenerateProjectFilesAsync(
+        string root, string projectPath, Action<string> onOutput, CancellationToken ct)
+        => ProcessRunner.RunBatchAsync(
+            GenerateBat(root), $"-project=\"{projectPath}\" -game -engine", root, onOutput, ct);
+
     /// <summary>The project's editor target: from Source/*Editor.Target.cs when present, else "&lt;Name&gt;Editor".</summary>
-    private static string FindEditorTargetName(string projectPath)
+    public static string FindEditorTargetName(string projectPath)
     {
         var sourceDir = Path.Combine(Path.GetDirectoryName(projectPath)!, "Source");
         if (Directory.Exists(sourceDir))
