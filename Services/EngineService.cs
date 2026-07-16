@@ -89,6 +89,78 @@ public static class EngineService
         => ProcessRunner.RunBatchAsync(
             GenerateBat(root), $"-project=\"{projectPath}\" -game -engine", root, onOutput, ct);
 
+    /// <summary>Builds an arbitrary project target (e.g. the dedicated server) against this engine.</summary>
+    public static Task<ProcessResult> BuildProjectTargetAsync(
+        string root, string projectPath, string targetName, string platform, string configuration,
+        Action<string> onOutput, CancellationToken ct)
+    {
+        var args = $"{targetName} {platform} {configuration} -Project=\"{projectPath}\" -WaitMutex -FromMsBuild";
+        return ProcessRunner.RunBatchAsync(BuildBat(root), args, root, onOutput, ct);
+    }
+
+    /// <summary>True when the project has C++ targets (dedicated servers require a code project).</summary>
+    public static bool ProjectHasSource(string projectPath)
+    {
+        var sourceDir = Path.Combine(Path.GetDirectoryName(projectPath)!, "Source");
+        return Directory.Exists(sourceDir) &&
+               Directory.EnumerateFiles(sourceDir, "*.Target.cs").Any();
+    }
+
+    /// <summary>The project's dedicated-server target from Source/*Server.Target.cs, or null when absent.</summary>
+    public static string? FindServerTargetName(string projectPath)
+    {
+        var sourceDir = Path.Combine(Path.GetDirectoryName(projectPath)!, "Source");
+        if (!Directory.Exists(sourceDir)) return null;
+        var target = Directory.EnumerateFiles(sourceDir, "*Server.Target.cs").FirstOrDefault();
+        return target is null ? null : Path.GetFileName(target)[..^".Target.cs".Length];
+    }
+
+    /// <summary>
+    /// Creates Source/&lt;Name&gt;Server.Target.cs for the project. Derives it from the project's own
+    /// game target when possible so engine-version-specific settings (BuildSettingsVersion,
+    /// IncludeOrderVersion) carry over; falls back to a generic template otherwise.
+    /// Returns the created file's path.
+    /// </summary>
+    public static string CreateServerTarget(string projectPath)
+    {
+        var name = Path.GetFileNameWithoutExtension(projectPath);
+        var sourceDir = Path.Combine(Path.GetDirectoryName(projectPath)!, "Source");
+        if (!Directory.Exists(sourceDir))
+            throw new InvalidOperationException(
+                "The project has no Source folder. Dedicated servers need a C++ project - " +
+                "add a C++ class from the editor first (Tools > New C++ Class), then retry.");
+
+        var serverFile = Path.Combine(sourceDir, name + "Server.Target.cs");
+        if (File.Exists(serverFile)) return serverFile;
+
+        var gameTarget = Path.Combine(sourceDir, name + ".Target.cs");
+        string content;
+        if (File.Exists(gameTarget))
+        {
+            content = File.ReadAllText(gameTarget)
+                .Replace(name + "Target", name + "ServerTarget")
+                .Replace("TargetType.Game", "TargetType.Server");
+        }
+        else
+        {
+            content =
+                "using UnrealBuildTool;\r\n\r\n" +
+                $"public class {name}ServerTarget : TargetRules\r\n" +
+                "{\r\n" +
+                $"\tpublic {name}ServerTarget(TargetInfo Target) : base(Target)\r\n" +
+                "\t{\r\n" +
+                "\t\tType = TargetType.Server;\r\n" +
+                "\t\tDefaultBuildSettings = BuildSettingsVersion.Latest;\r\n" +
+                "\t\tIncludeOrderVersion = EngineIncludeOrderVersion.Latest;\r\n" +
+                $"\t\tExtraModuleNames.Add(\"{name}\");\r\n" +
+                "\t}\r\n" +
+                "}\r\n";
+        }
+
+        File.WriteAllText(serverFile, content);
+        return serverFile;
+    }
+
     /// <summary>The project's editor target: from Source/*Editor.Target.cs when present, else "&lt;Name&gt;Editor".</summary>
     public static string FindEditorTargetName(string projectPath)
     {

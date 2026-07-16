@@ -62,7 +62,7 @@
                         <TextBlock FontFamily="Segoe UI Semibold" FontSize="14" Text="The tabs in detail" Margin="0,0,0,8"/>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔧 Dependencies"/><Run Text=" — verifies Git, Perforce and Visual Studio incl. every workload Unreal needs (C++ desktop &amp; game development, MSVC v143, Windows SDK). One click installs whatever is missing."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="⬇ Get Source"/><Run Text=" — clones Epic's UnrealEngine repository, runs Setup.bat (downloads binary dependencies) and GenerateProjectFiles.bat (creates UE5.sln). Steps can also be run individually, e.g. to re-run Setup.bat after switching branches."/></TextBlock>
-                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔨 Build"/><Run Text=" — compiles any engine target (editor, ShaderCompileWorker, UnrealPak, …) in any configuration with live progress. 'Open UE5.sln' jumps into Visual Studio for engine code work."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔨 Build"/><Run Text=" — compiles any engine target (editor, ShaderCompileWorker, UnrealPak, …) in any configuration with live progress. Also creates and compiles your project's dedicated-server target — one of the main reasons to use a source build. 'Open UE5.sln' jumps into Visual Studio for engine code work."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔁 Perforce"/><Run Text=" — connection, login (your password is never stored — only Perforce's own session ticket), workspace selection and manual sync with force/parallel options."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🚀 Sync &amp; Launch"/><Run Text=" — the daily-driver button: sync latest from Perforce → rebuild engine → rebuild your project's modules → launch the editor. Each step is optional; most days you only need sync + launch."/></TextBlock>
                     </StackPanel>
@@ -277,6 +277,34 @@
                             <Button Content="✖ Cancel" Command="{Binding CancelCommand}"/>
                             <Button Content="Open UE5.sln" Command="{Binding OpenSolutionCommand}"/>
                             <Button Content="Open engine folder" Command="{Binding OpenFolderCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Text="Dedicated Server" Style="{StaticResource SectionText}"/>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,10"
+                                   Text="Compile your project's dedicated-server target with this source engine — the reason many teams switch to source builds in the first place. Uses the Configuration selected above."/>
+
+                        <TextBlock Text="Project (.uproject)" Style="{StaticResource LabelText}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding ProjectPath, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button Grid.Column="1" Content="Browse…" Command="{Binding BrowseProjectCommand}" Margin="8,0,0,0"/>
+                        </Grid>
+
+                        <TextBlock Text="{Binding ServerStatus}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12.5" Margin="0,8,0,12"/>
+
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="⚙  Create server target" Command="{Binding CreateServerTargetCommand}"/>
+                            <Button Content="🖥  Build dedicated server" Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding BuildServerCommand}"/>
+                            <Button Content="Open output folder" Command="{Binding OpenServerOutputCommand}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
