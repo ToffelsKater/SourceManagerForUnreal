@@ -15,6 +15,28 @@ public static class ConfigService
 
     public static AppConfig Config { get; private set; } = Load();
 
+    /// <summary>
+    /// Raised after the selected engine changes. Every page listens, because which actions make
+    /// sense depends on the kind of engine: a precompiled Epic Games Launcher build has no engine
+    /// source to clone, set up or compile.
+    /// </summary>
+    public static event Action? EngineChanged;
+
+    /// <summary>Points the whole app at another engine folder and tells every page to re-evaluate.</summary>
+    public static void SetEngineRoot(string root)
+    {
+        if (string.Equals(Config.EngineRoot, root, StringComparison.Ordinal)) return;
+        Config.EngineRoot = root;
+        Save();
+        EngineChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Re-evaluates the engine without changing the path — for when the folder's contents changed
+    /// under us (a clone finished, Setup.bat ran, an engine was uninstalled).
+    /// </summary>
+    public static void NotifyEngineChanged() => EngineChanged?.Invoke();
+
     private static AppConfig Load()
     {
         try

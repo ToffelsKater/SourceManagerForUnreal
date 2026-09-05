@@ -1,9 +1,16 @@
 using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
+using UnrealManager.Models;
 
 namespace UnrealManager.Services;
 
-/// <summary>Operations on an Unreal Engine source tree (clone, setup, generate, build, launch).</summary>
+/// <summary>
+/// Operations on an Unreal Engine installation (clone, setup, generate, build, launch).
+/// Two kinds are supported: a GitHub source tree, and a precompiled build installed by the
+/// Epic Games Launcher. Everything that compiles engine code applies to source trees only —
+/// use <see cref="IsSourceBuild"/> before offering it.
+/// </summary>
 public static class EngineService
 {
     public static string SetupBat(string root) => Path.Combine(root, "Setup.bat");
@@ -13,8 +20,55 @@ public static class EngineService
     public static string ShaderCompileWorkerExe(string root) => Path.Combine(root, "Engine", "Binaries", "Win64", "ShaderCompileWorker.exe");
     public static string SolutionPath(string root) => Path.Combine(root, "UE5.sln");
 
-    public static bool IsEngineRoot(string root) =>
+    /// <summary>Epic's marker for a precompiled ("installed") engine build.</summary>
+    public static string InstalledBuildMarker(string root) => Path.Combine(root, "Engine", "Build", "InstalledBuild.txt");
+
+    public static string BuildVersionFile(string root) => Path.Combine(root, "Engine", "Build", "Build.version");
+
+    /// <summary>UnrealBuildTool itself — the only way to generate project files in a launcher build.</summary>
+    public static string UnrealBuildToolExe(string root) =>
+        Path.Combine(root, "Engine", "Binaries", "DotNET", "UnrealBuildTool", "UnrealBuildTool.exe");
+
+    /// <summary>A GitHub source tree: Setup.bat is shipped by source distributions only.</summary>
+    public static bool IsSourceBuild(string root) =>
         !string.IsNullOrWhiteSpace(root) && File.Exists(SetupBat(root));
+
+    /// <summary>
+    /// A precompiled engine installed by the Epic Games Launcher. Epic marks these with
+    /// Engine/Build/InstalledBuild.txt; they ship no engine source, so engine targets
+    /// cannot be compiled against them.
+    /// </summary>
+    public static bool IsLauncherBuild(string root) =>
+        !string.IsNullOrWhiteSpace(root) && File.Exists(InstalledBuildMarker(root));
+
+    public static bool IsEngineRoot(string root) => IsSourceBuild(root) || IsLauncherBuild(root);
+
+    /// <summary>Only meaningful for a folder <see cref="IsEngineRoot"/> already accepted.</summary>
+    public static EngineKind DetectKind(string root) =>
+        IsSourceBuild(root) ? EngineKind.Source : EngineKind.Launcher;
+
+    /// <summary>"5.8.1" read from Engine/Build/Build.version, or null when it cannot be read.</summary>
+    public static string? ReadVersion(string root)
+    {
+        try
+        {
+            var file = BuildVersionFile(root);
+            if (!File.Exists(file)) return null;
+
+            using var doc = JsonDocument.Parse(File.ReadAllText(file));
+            var element = doc.RootElement;
+            if (!element.TryGetProperty("MajorVersion", out var major) ||
+                !element.TryGetProperty("MinorVersion", out var minor))
+                return null;
+
+            var patch = element.TryGetProperty("PatchVersion", out var p) ? p.GetInt32() : 0;
+            return $"{major.GetInt32()}.{minor.GetInt32()}.{patch}";
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     public static bool IsEditorBuilt(string root) => File.Exists(EditorExe(root));
 
@@ -83,11 +137,30 @@ public static class EngineService
         return ProcessRunner.RunBatchAsync(BuildBat(root), args, root, onOutput, ct);
     }
 
-    /// <summary>Regenerates project files for a specific .uproject against this engine.</summary>
+    /// <summary>
+    /// Regenerates project files for a specific .uproject against this engine.
+    /// Source trees have GenerateProjectFiles.bat; launcher builds do not, so those go straight to
+    /// UnrealBuildTool with the arguments Epic's own UnrealVersionSelector uses ("-rocket" is what
+    /// tells UBT the engine is an installed build, and "-engine" is meaningless without source).
+    /// </summary>
     public static Task<ProcessResult> GenerateProjectFilesAsync(
         string root, string projectPath, Action<string> onOutput, CancellationToken ct)
-        => ProcessRunner.RunBatchAsync(
-            GenerateBat(root), $"-project=\"{projectPath}\" -game -engine", root, onOutput, ct);
+    {
+        if (IsSourceBuild(root))
+            return ProcessRunner.RunBatchAsync(
+                GenerateBat(root), $"-project=\"{projectPath}\" -game -engine", root, onOutput, ct);
+
+        var ubt = UnrealBuildToolExe(root);
+        if (!File.Exists(ubt))
+        {
+            onOutput("ERROR: UnrealBuildTool.exe not found at " + ubt);
+            onOutput("This engine install looks incomplete — verify it in the Epic Games Launcher.");
+            return Task.FromResult(new ProcessResult(-1, "", "UnrealBuildTool.exe not found"));
+        }
+
+        return ProcessRunner.RunAsync(
+            ubt, $"-projectfiles -project=\"{projectPath}\" -game -rocket -progress", root, onOutput, ct);
+    }
 
     /// <summary>Builds an arbitrary project target (e.g. the dedicated server) against this engine.</summary>
     public static Task<ProcessResult> BuildProjectTargetAsync(
@@ -212,7 +285,11 @@ public static class EngineService
     {
         var exe = EditorExe(root);
         if (!File.Exists(exe))
-            throw new FileNotFoundException("UnrealEditor.exe not found — build the engine first.", exe);
+            throw new FileNotFoundException(
+                IsLauncherBuild(root)
+                    ? "UnrealEditor.exe not found — this launcher install is incomplete; verify it in the Epic Games Launcher."
+                    : "UnrealEditor.exe not found — build the engine first.",
+                exe);
 
         var args = "";
         if (!string.IsNullOrWhiteSpace(projectPath)) args += $"\"{projectPath}\" ";
@@ -227,7 +304,11 @@ public static class EngineService
         });
     }
 
-    public static string GetFreeSpaceInfo(string path)
+    /// <summary>
+    /// Free space on the drive holding <paramref name="path"/>. The ~200 GB hint only makes sense
+    /// while a source build is on the table, so callers pointing at a precompiled engine turn it off.
+    /// </summary>
+    public static string GetFreeSpaceInfo(string path, bool includeSourceBuildHint = true)
     {
         try
         {
@@ -235,7 +316,8 @@ public static class EngineService
             if (rootPath is null) return "";
             var drive = new DriveInfo(rootPath);
             var freeGb = drive.AvailableFreeSpace / (1024.0 * 1024 * 1024);
-            return $"{freeGb:F0} GB free on {drive.Name} (a full source build needs ~200 GB)";
+            var hint = includeSourceBuildHint ? " (a full source build needs ~200 GB)" : "";
+            return $"{freeGb:F0} GB free on {drive.Name}{hint}";
         }
         catch
         {

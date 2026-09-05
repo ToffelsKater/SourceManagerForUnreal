@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows.Input;
 using UnrealManager.Core;
+using UnrealManager.Models;
 using UnrealManager.Services;
 
 namespace UnrealManager.ViewModels;
@@ -34,24 +35,52 @@ public sealed class SourceViewModel : PageViewModel
         get => ConfigService.Config.EngineRoot;
         set
         {
-            ConfigService.Config.EngineRoot = value;
-            ConfigService.Save();
+            ConfigService.SetEngineRoot(value);
             OnPropertyChanged();
             OnPropertyChanged(nameof(DiskInfo));
             OnPropertyChanged(nameof(EngineRootState));
+            SyncSelectedEngine();
         }
     }
 
-    public string DiskInfo => string.IsNullOrWhiteSpace(EngineRoot) ? "" : EngineService.GetFreeSpaceInfo(EngineRoot);
+    public string DiskInfo => string.IsNullOrWhiteSpace(EngineRoot)
+        ? ""
+        : EngineService.GetFreeSpaceInfo(EngineRoot, includeSourceBuildHint: !IsLauncherEngine);
 
     public string EngineRootState =>
-        EngineService.IsEngineRoot(EngineRoot) ? "✔ Engine source found at this location"
+        EngineService.IsLauncherBuild(EngineRoot)
+            ? "✔ Epic Games Launcher engine (precompiled) — nothing to clone or compile here"
+        : EngineService.IsSourceBuild(EngineRoot) ? "✔ Engine source found at this location"
         : Directory.Exists(EngineRoot) && Directory.EnumerateFileSystemEntries(EngineRoot).Any()
             ? "⚠ Folder exists and is not empty (clone needs an empty/new folder)"
             : "Folder is empty or will be created by the clone";
 
+    /// <summary>Cloning, Setup.bat and GenerateProjectFiles.bat exist only for source engines.</summary>
+    public bool ShowSourceWorkflow => !IsLauncherEngine;
+
     public ObservableCollection<string> Branches { get; } =
         ["release", "5.6", "5.5", "5.4", "ue5-main"];
+
+    /* ---------------- auto-discovered engines ---------------- */
+
+    /// <summary>Every engine found on this PC — Epic Games Launcher installs and source trees alike.</summary>
+    public ObservableCollection<EngineInstall> DetectedEngines { get; } = [];
+
+    private EngineInstall? _selectedEngine;
+    public EngineInstall? SelectedEngine
+    {
+        get => _selectedEngine;
+        set
+        {
+            if (!Set(ref _selectedEngine, value)) return;
+            if (value is not null) EngineRoot = value.Root;
+        }
+    }
+
+    public bool HasDetectedEngines => DetectedEngines.Count > 0;
+
+    private string _discoveryStatus = "Looking for installed engines…";
+    public string DiscoveryStatus { get => _discoveryStatus; private set => Set(ref _discoveryStatus, value); }
 
     public ICommand BrowseCommand { get; }
     public ICommand TestAccessCommand { get; }
@@ -62,16 +91,17 @@ public sealed class SourceViewModel : PageViewModel
     public ICommand RunAllCommand { get; }
     public ICommand CancelCommand { get; }
     public ICommand OpenGitHubDocsCommand { get; }
+    public ICommand RefreshEnginesCommand { get; }
 
     public SourceViewModel()
     {
         BrowseCommand = new RelayCommand(_ => Browse());
         TestAccessCommand = new AsyncRelayCommand(_ => TestAccessAsync(), _ => !IsBusy);
         FetchBranchesCommand = new AsyncRelayCommand(_ => FetchBranchesAsync(), _ => !IsBusy);
-        CloneCommand = new AsyncRelayCommand(_ => CloneAsync(), _ => !IsBusy);
-        SetupCommand = new AsyncRelayCommand(_ => SetupAsync(), _ => !IsBusy && EngineService.IsEngineRoot(EngineRoot));
-        GenerateCommand = new AsyncRelayCommand(_ => GenerateAsync(), _ => !IsBusy && EngineService.IsEngineRoot(EngineRoot));
-        RunAllCommand = new AsyncRelayCommand(_ => RunAllAsync(), _ => !IsBusy);
+        CloneCommand = new AsyncRelayCommand(_ => CloneAsync(), _ => !IsBusy && !IsLauncherEngine);
+        SetupCommand = new AsyncRelayCommand(_ => SetupAsync(), _ => !IsBusy && IsSourceEngine);
+        GenerateCommand = new AsyncRelayCommand(_ => GenerateAsync(), _ => !IsBusy && IsSourceEngine);
+        RunAllCommand = new AsyncRelayCommand(_ => RunAllAsync(), _ => !IsBusy && !IsLauncherEngine);
         CancelCommand = new RelayCommand(_ => Cancel(), _ => IsBusy);
         OpenGitHubDocsCommand = new RelayCommand(_ =>
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -79,6 +109,68 @@ public sealed class SourceViewModel : PageViewModel
                 FileName = "https://www.unrealengine.com/ue-on-github",
                 UseShellExecute = true,
             }));
+        RefreshEnginesCommand = new AsyncRelayCommand(_ => RefreshEnginesAsync());
+
+        _ = RefreshEnginesAsync();
+    }
+
+    protected override void OnEngineChanged()
+    {
+        base.OnEngineChanged();
+        OnPropertyChanged(nameof(EngineRoot));
+        OnPropertyChanged(nameof(DiskInfo));
+        OnPropertyChanged(nameof(EngineRootState));
+        OnPropertyChanged(nameof(ShowSourceWorkflow));
+    }
+
+    /// <summary>
+    /// Scans for engines and refreshes the picker. Runs once at startup and on demand; the scan
+    /// itself is off the UI thread because it touches the registry and several folders.
+    /// </summary>
+    private async Task RefreshEnginesAsync()
+    {
+        try
+        {
+            DiscoveryStatus = "Looking for installed engines…";
+            var engines = await Task.Run(EngineDiscoveryService.Discover);
+
+            DetectedEngines.Clear();
+            foreach (var engine in engines) DetectedEngines.Add(engine);
+            OnPropertyChanged(nameof(HasDetectedEngines));
+
+            var launcherCount = engines.Count(e => e.IsLauncher);
+            var sourceCount = engines.Count - launcherCount;
+            DiscoveryStatus = engines.Count == 0
+                ? "No engine found on this PC. Install one from the Epic Games Launcher, or clone the source below."
+                : $"Found {engines.Count} engine(s): {launcherCount} from the Epic Games Launcher, " +
+                  $"{sourceCount} source build(s). Selecting one points the whole app at it.";
+
+            // First run (or the saved folder was deleted): adopt the best engine we found rather
+            // than leaving the app pointed at a path that is not an engine at all.
+            if (!EngineService.IsEngineRoot(EngineRoot) && engines.Count > 0)
+            {
+                var pick = engines[0];
+                Log("Auto-selected engine: " + pick.Display);
+                EngineRoot = pick.Root;
+            }
+
+            SyncSelectedEngine();
+        }
+        catch (Exception ex)
+        {
+            DiscoveryStatus = "Could not scan for installed engines: " + ex.Message;
+        }
+    }
+
+    /// <summary>Keeps the picker showing whichever detected engine the engine folder currently points at.</summary>
+    private void SyncSelectedEngine()
+    {
+        var current = EngineInstall.Normalize(ConfigService.Config.EngineRoot);
+        var match = DetectedEngines.FirstOrDefault(
+            e => string.Equals(e.Root, current, StringComparison.OrdinalIgnoreCase));
+        if (ReferenceEquals(match, _selectedEngine)) return;
+        _selectedEngine = match;
+        OnPropertyChanged(nameof(SelectedEngine));
     }
 
     private void Browse()

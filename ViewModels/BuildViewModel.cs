@@ -12,6 +12,12 @@ public sealed partial class BuildViewModel : PageViewModel
     public override string Title => "Build";
     public override string Icon => "🔨"; // hammer
 
+    /// <summary>Page subtitle — a precompiled engine leaves only the project-side half of this page.</summary>
+    public string Intro => IsSourceEngine
+        ? "Compile the engine target with UnrealBuildTool. A first full editor build can take 1–3 hours."
+        : "This engine is precompiled, so its own targets cannot be rebuilt here. Compile your project's " +
+          "dedicated-server target against it below.";
+
     public ObservableCollection<string> Targets { get; } =
         ["UnrealEditor", "ShaderCompileWorker", "UnrealPak", "UnrealInsights", "CrashReportClient", "UnrealLightmass"];
 
@@ -57,8 +63,8 @@ public sealed partial class BuildViewModel : PageViewModel
 
     public BuildViewModel()
     {
-        BuildCommand = new AsyncRelayCommand(_ => BuildAsync(),
-            _ => !IsBusy && EngineService.IsEngineRoot(ConfigService.Config.EngineRoot));
+        // Engine targets exist only in a source tree; a launcher build ships them already compiled.
+        BuildCommand = new AsyncRelayCommand(_ => BuildAsync(), _ => !IsBusy && IsSourceEngine);
         CancelCommand = new RelayCommand(_ => Cancel(), _ => IsBusy);
         OpenSolutionCommand = new RelayCommand(_ => OpenSolution(),
             _ => File.Exists(EngineService.SolutionPath(ConfigService.Config.EngineRoot)));
@@ -75,6 +81,13 @@ public sealed partial class BuildViewModel : PageViewModel
         LaunchServerCommand = new RelayCommand(_ => LaunchServer(), _ => ServerExeExists);
         OpenServerOutputCommand = new RelayCommand(_ => OpenServerOutput(),
             _ => ProjectSet && Directory.Exists(ServerOutputDir));
+        RefreshServerStatus();
+    }
+
+    protected override void OnEngineChanged()
+    {
+        base.OnEngineChanged();
+        OnPropertyChanged(nameof(Intro));
         RefreshServerStatus();
     }
 

@@ -12,6 +12,13 @@ public sealed class SyncLaunchViewModel : PageViewModel
     public override string Title => "Sync & Launch";
     public override string Icon => "🚀"; // rocket
 
+    /// <summary>Page subtitle — there is no engine to rebuild on a precompiled launcher build.</summary>
+    public string Intro => IsSourceEngine
+        ? "One button: pull the latest from Perforce, rebuild changed engine code, and open the editor — " +
+          "the classic UGS workflow."
+        : "One button: pull the latest from Perforce, rebuild your project against the precompiled engine, " +
+          "and open the editor.";
+
     public bool StepSync
     {
         get => ConfigService.Config.StepSync;
@@ -51,6 +58,23 @@ public sealed class SyncLaunchViewModel : PageViewModel
     private string _stepStatus = "";
     public string StepStatus { get => _stepStatus; private set => Set(ref _stepStatus, value); }
 
+    /* ---- step labels: the engine build step disappears for a precompiled launcher engine,
+            so the remaining steps have to renumber themselves. ---- */
+
+    public string StepSyncLabel => "1.  Sync latest from Perforce";
+
+    public string StepBuildLabel => "2.  Build engine target";
+
+    public string StepBuildProjectLabel =>
+        (IsSourceEngine ? "3." : "2.") +
+        "  Full project recompile — deletes Intermediate / Binaries / DDC / .vs, regenerates project files, " +
+        "rebuilds (fixes 'Missing Modules')";
+
+    public string StepLaunchLabel => (IsSourceEngine ? "4." : "3.") + "  Launch editor";
+
+    /// <summary>The engine build step only ever runs against a source tree.</summary>
+    private bool WillBuildEngine => StepBuild && IsSourceEngine;
+
     public ObservableCollection<CheckItem> SanityResults { get; } = [];
 
     public ICommand BrowseProjectCommand { get; }
@@ -62,9 +86,17 @@ public sealed class SyncLaunchViewModel : PageViewModel
     {
         BrowseProjectCommand = new RelayCommand(_ => BrowseProject());
         RunCommand = new AsyncRelayCommand(_ => RunAsync(),
-            _ => !IsBusy && (StepSync || StepBuild || StepBuildProject || StepLaunch));
+            _ => !IsBusy && (StepSync || WillBuildEngine || StepBuildProject || StepLaunch));
         SanityCheckCommand = new AsyncRelayCommand(_ => SanityCheckAsync(), _ => !IsBusy);
         CancelCommand = new RelayCommand(_ => Cancel(), _ => IsBusy);
+    }
+
+    protected override void OnEngineChanged()
+    {
+        base.OnEngineChanged();
+        OnPropertyChanged(nameof(Intro));
+        OnPropertyChanged(nameof(StepBuildProjectLabel));
+        OnPropertyChanged(nameof(StepLaunchLabel));
     }
 
     /// <summary>
@@ -87,11 +119,11 @@ public sealed class SyncLaunchViewModel : PageViewModel
 
         // Engine tree — needed by build and launch steps.
         var engineOk = EngineService.IsEngineRoot(cfg.EngineRoot);
-        Add("Engine source folder", engineOk,
-            cfg.EngineRoot,
-            "Set or clone the engine on the 'Get Source' tab");
+        Add("Engine folder", engineOk,
+            $"{cfg.EngineRoot} ({(IsLauncherEngine ? "Epic Games Launcher build" : "source build")})",
+            "Pick an installed engine or clone the source on the 'Get Source' tab");
 
-        if (engineOk)
+        if (engineOk && IsSourceEngine)
         {
             // Marker file left by GitDependencies: ".uedependencies" since UE 5.8, ".ue4dependencies" before.
             Add("Engine dependencies (Setup.bat)",
@@ -132,7 +164,7 @@ public sealed class SyncLaunchViewModel : PageViewModel
             }
         }
 
-        if (StepBuild || StepBuildProject)
+        if (WillBuildEngine || StepBuildProject)
         {
             var vsInstances = await VisualStudioService.GetInstancesAsync();
             Add("Visual Studio 2022", vsInstances.Count > 0,
@@ -167,18 +199,23 @@ public sealed class SyncLaunchViewModel : PageViewModel
 
         if (StepLaunch && engineOk)
         {
-            if (!StepBuild)
+            if (!WillBuildEngine)
             {
-                Add("UnrealEditor.exe built", EngineService.IsEditorBuilt(cfg.EngineRoot),
+                Add("UnrealEditor.exe present", EngineService.IsEditorBuilt(cfg.EngineRoot),
                     "found",
-                    "Build UnrealEditor on the 'Build' tab, or enable step 2");
+                    IsLauncherEngine
+                        ? "Missing from this launcher install — verify or reinstall it in the Epic Games Launcher"
+                        : "Build UnrealEditor on the 'Build' tab, or enable the engine build step");
             }
             Add("ShaderCompileWorker.exe", File.Exists(EngineService.ShaderCompileWorkerExe(cfg.EngineRoot)),
                 "found",
-                "will be built automatically before launch", blocking: false);
+                IsSourceEngine
+                    ? "will be built automatically before launch"
+                    : "missing from this launcher install — verify it in the Epic Games Launcher",
+                blocking: false);
         }
 
-        if ((StepBuild || StepBuildProject) && engineOk)
+        if ((WillBuildEngine || StepBuildProject) && engineOk)
         {
             try
             {
@@ -228,12 +265,16 @@ public sealed class SyncLaunchViewModel : PageViewModel
             Log("Sync done.");
         }
 
-        if (StepBuild)
+        if (StepBuild && IsLauncherEngine)
+        {
+            Log("Precompiled Epic Games Launcher engine — nothing to compile; skipping the engine build step.");
+        }
+        else if (StepBuild)
         {
             StepStatus = $"Step: building {cfg.BuildTarget} {cfg.BuildConfiguration}…";
-            if (!EngineService.IsEngineRoot(cfg.EngineRoot))
+            if (!EngineService.IsSourceBuild(cfg.EngineRoot))
             {
-                StepStatus = "Engine root not valid — set it on the Get Source tab.";
+                StepStatus = "Engine source not valid — set it on the Get Source tab.";
                 return;
             }
             var build = await EngineService.BuildAsync(
@@ -314,9 +355,17 @@ public sealed class SyncLaunchViewModel : PageViewModel
                 return;
             }
 
-            // Safety net: the editor refuses to start without ShaderCompileWorker.
+            // Safety net: the editor refuses to start without ShaderCompileWorker. A launcher build
+            // ships it prebuilt, so a missing one there means a broken install, not a missing build.
             if (!File.Exists(EngineService.ShaderCompileWorkerExe(cfg.EngineRoot)))
             {
+                if (IsLauncherEngine)
+                {
+                    StepStatus = "ShaderCompileWorker.exe missing from this launcher engine — " +
+                                 "verify the installation in the Epic Games Launcher.";
+                    return;
+                }
+
                 StepStatus = "ShaderCompileWorker missing — building it first…";
                 Log("ShaderCompileWorker.exe not found; building it (the editor cannot start without it).");
                 var scw = await EngineService.BuildShaderCompileWorkerAsync(cfg.EngineRoot, Log, ct);

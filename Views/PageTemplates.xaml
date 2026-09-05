@@ -28,7 +28,7 @@
             <StackPanel Margin="4" MaxWidth="900" HorizontalAlignment="Left">
                 <TextBlock Text="Guide" Style="{StaticResource HeaderText}"/>
                 <TextBlock Style="{StaticResource SubHeaderText}"
-                           Text="What this tool does and how to go from an empty PC to a running source-built Unreal Editor."/>
+                           Text="What this tool does and how to go from an empty PC to a running Unreal Editor — source-built, or precompiled from the Epic Games Launcher."/>
 
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
@@ -47,10 +47,20 @@
 
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
+                        <TextBlock FontFamily="Segoe UI Semibold" FontSize="14" Text="Two kinds of engine — both supported" Margin="0,0,0,6"/>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="Epic Games Launcher (precompiled)"/><Run Text=" — the engine you install from the launcher. The editor is already built and no engine source ships with it, so there is nothing to clone, no Setup.bat and nothing to compile. The Get Source tab finds these automatically: pick one from 'Engines found on this PC' and every engine-compilation action disappears from the app."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="Source build (GitHub)"/><Run Text=" — Epic's UnrealEngine repository, compiled on your machine. Needed to change engine code, debug into the engine or ship a custom engine to your team. This is the workflow the steps below describe."/></TextBlock>
+                        <TextBlock Margin="0,6,0,0" Foreground="{StaticResource MutedBrush}"
+                                   Text="Either way, everything else works the same: Perforce sync, full project recompiles against the selected engine, dedicated-server builds and launching the editor. Scanning covers the launcher's own manifest, the registry and the usual install folders — press 'Rescan' after installing a new version."/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
                         <TextBlock FontFamily="Segoe UI Semibold" FontSize="14" Text="First-time setup on a new workstation" Margin="0,0,0,8"/>
                         <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="1  "/><Run FontFamily="Segoe UI Semibold" Text="Dependencies"/><Run Text=" — press Install on every red row (Git, Perforce). No Visual Studio? Use 'Install VS 2022 Community' — it selects all Unreal-required workloads for you. Big download, grab a coffee."/></TextBlock>
                         <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="2  "/><Run FontFamily="Segoe UI Semibold" Text="GitHub access"/><Run Text=" — the engine source is in a private repository: link your GitHub account to your Epic Games account ('Link GitHub to Epic' button on the Get Source tab) and accept the invitation e-mail from GitHub. 'Test GitHub access' tells you when it works."/></TextBlock>
-                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="3  "/><Run FontFamily="Segoe UI Semibold" Text="Get Source"/><Run Text=" — pick an engine folder (needs ~200 GB free) and a branch (e.g. 5.8, or 'release' for the latest stable), then 'Clone + Setup + Generate'. This downloads tens of GB and takes a while; the log shows progress."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="3  "/><Run FontFamily="Segoe UI Semibold" Text="Get Source"/><Run Text=" — already have an engine from the Epic Games Launcher? Pick it under 'Engines found on this PC' and skip straight to step 5. For a source build, pick an engine folder (needs ~200 GB free) and a branch (e.g. 5.8, or 'release' for the latest stable), then 'Clone + Setup + Generate'. This downloads tens of GB and takes a while; the log shows progress."/></TextBlock>
                         <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="4  "/><Run FontFamily="Segoe UI Semibold" Text="Build"/><Run Text=" — target 'UnrealEditor', configuration 'Development', press Build. A clean build takes 1–3 hours depending on CPU. ShaderCompileWorker is built automatically."/></TextBlock>
                         <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="5  "/><Run FontFamily="Segoe UI Semibold" Text="Perforce"/><Run Text=" — enter the team's server address, your user name and password, log in, then pick your workspace (create workspaces in P4V — button provided)."/></TextBlock>
                         <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="6  "/><Run FontFamily="Segoe UI Semibold" Text="Sync &amp; Launch"/><Run Text=" — select your .uproject, tick the steps you want, and use '🔍 Sanity check' to verify everything before the first run."/></TextBlock>
@@ -61,10 +71,10 @@
                     <StackPanel>
                         <TextBlock FontFamily="Segoe UI Semibold" FontSize="14" Text="The tabs in detail" Margin="0,0,0,8"/>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔧 Dependencies"/><Run Text=" — verifies Git, Perforce and Visual Studio incl. every workload Unreal needs (C++ desktop &amp; game development, MSVC v143, Windows SDK). One click installs whatever is missing."/></TextBlock>
-                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="⬇ Get Source"/><Run Text=" — clones Epic's UnrealEngine repository, runs Setup.bat (downloads binary dependencies) and GenerateProjectFiles.bat (creates UE5.sln). Steps can also be run individually, e.g. to re-run Setup.bat after switching branches."/></TextBlock>
-                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔨 Build"/><Run Text=" — compiles any engine target (editor, ShaderCompileWorker, UnrealPak, …) in any configuration with live progress. Also creates and compiles your project's dedicated-server target — one of the main reasons to use a source build. 'Open UE5.sln' jumps into Visual Studio for engine code work."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="⬇ Get Source"/><Run Text=" — auto-detects every engine installed on the PC (Epic Games Launcher builds and source trees) and lets you pick the one the app works against. For source builds it also clones Epic's UnrealEngine repository, runs Setup.bat (downloads binary dependencies) and GenerateProjectFiles.bat (creates UE5.sln). Steps can also be run individually, e.g. to re-run Setup.bat after switching branches."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔨 Build"/><Run Text=" — with a source engine, compiles any engine target (editor, ShaderCompileWorker, UnrealPak, …) in any configuration with live progress. Also creates and compiles your project's dedicated-server target — one of the main reasons to use a source build. 'Open UE5.sln' jumps into Visual Studio for engine code work. With a precompiled launcher engine the engine-build controls are hidden and only the dedicated-server section remains."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔁 Perforce"/><Run Text=" — connection, login (your password is never stored — only Perforce's own session ticket), workspace selection and manual sync with force/parallel options."/></TextBlock>
-                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🚀 Sync &amp; Launch"/><Run Text=" — the daily-driver button: sync latest from Perforce → rebuild engine → rebuild your project's modules → launch the editor. Each step is optional; most days you only need sync + launch."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🚀 Sync &amp; Launch"/><Run Text=" — the daily-driver button: sync latest from Perforce → rebuild engine → rebuild your project's modules → launch the editor. Each step is optional; most days you only need sync + launch. On a precompiled launcher engine the engine-rebuild step is dropped and the rest renumber."/></TextBlock>
                     </StackPanel>
                 </Border>
 
@@ -168,11 +178,44 @@
             <StackPanel Margin="4">
                 <TextBlock Text="Get Source" Style="{StaticResource HeaderText}"/>
                 <TextBlock Style="{StaticResource SubHeaderText}"
-                           Text="Clone the Unreal Engine source, download binary dependencies (Setup.bat), and generate project files."/>
+                           Text="Pick an engine already installed on this PC, or clone the Unreal Engine source, download binary dependencies (Setup.bat) and generate project files."/>
 
                 <Control Template="{StaticResource StatusStrip}"/>
 
                 <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Engines found on this PC" Style="{StaticResource LabelText}"/>
+                        <TextBlock Text="{Binding DiscoveryStatus}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                        <Grid Visibility="{Binding HasDetectedEngines, Converter={StaticResource BoolVis}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" ItemsSource="{Binding DetectedEngines}"
+                                      SelectedItem="{Binding SelectedEngine}" DisplayMemberPath="Display"/>
+                            <Button Grid.Column="1" Content="↻ Rescan" Margin="8,0,0,0"
+                                    Command="{Binding RefreshEnginesCommand}"/>
+                        </Grid>
+                        <Button Content="↻ Rescan" HorizontalAlignment="Left"
+                                Command="{Binding RefreshEnginesCommand}"
+                                Visibility="{Binding HasDetectedEngines, Converter={StaticResource BoolVis}, ConverterParameter=Invert}"/>
+                        <TextBlock Text="{Binding EngineSummary}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}"
+                        Visibility="{Binding IsLauncherEngine, Converter={StaticResource BoolVis}}">
+                    <StackPanel>
+                        <TextBlock Text="Precompiled engine selected" Style="{StaticResource LabelText}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" FontSize="12.5"
+                                   Text="This engine came from the Epic Games Launcher: the editor is already built and no engine source is shipped, so cloning, Setup.bat, GenerateProjectFiles and every engine-compilation action are hidden. Everything else still works — Perforce sync, recompiling your project&apos;s modules and plugins against this engine, dedicated-server builds, and launching the editor."/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}"
+                        Visibility="{Binding ShowSourceWorkflow, Converter={StaticResource BoolVis}}">
                     <StackPanel>
                         <TextBlock Text="GitHub repository" Style="{StaticResource LabelText}"/>
                         <TextBox Text="{Binding RemoteUrl, UpdateSourceTrigger=PropertyChanged}"/>
@@ -219,7 +262,8 @@
                     </StackPanel>
                 </Border>
 
-                <Border Style="{StaticResource Card}">
+                <Border Style="{StaticResource Card}"
+                        Visibility="{Binding ShowSourceWorkflow, Converter={StaticResource BoolVis}}">
                     <StackPanel>
                         <TextBlock Text="Run" Style="{StaticResource LabelText}"/>
                         <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,10"
@@ -243,39 +287,44 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="4">
                 <TextBlock Text="Build" Style="{StaticResource HeaderText}"/>
-                <TextBlock Style="{StaticResource SubHeaderText}"
-                           Text="Compile the engine target with UnrealBuildTool. A first full editor build can take 1–3 hours."/>
+                <TextBlock Style="{StaticResource SubHeaderText}" Text="{Binding Intro}"/>
 
                 <Control Template="{StaticResource StatusStrip}"/>
 
                 <Border Style="{StaticResource Card}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="16"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Target" Style="{StaticResource LabelText}"/>
-                            <ComboBox ItemsSource="{Binding Targets}" SelectedItem="{Binding Target}"/>
+                    <StackPanel>
+                        <TextBlock Text="{Binding EngineSummary}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel Width="300" Margin="0,0,16,0"
+                                        Visibility="{Binding IsSourceEngine, Converter={StaticResource BoolVis}}">
+                                <TextBlock Text="Engine target" Style="{StaticResource LabelText}"/>
+                                <ComboBox ItemsSource="{Binding Targets}" SelectedItem="{Binding Target}"/>
+                            </StackPanel>
+                            <StackPanel Width="300">
+                                <TextBlock Text="Configuration" Style="{StaticResource LabelText}"/>
+                                <ComboBox ItemsSource="{Binding Configurations}" SelectedItem="{Binding Configuration}"/>
+                            </StackPanel>
                         </StackPanel>
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="Configuration" Style="{StaticResource LabelText}"/>
-                            <ComboBox ItemsSource="{Binding Configurations}" SelectedItem="{Binding Configuration}"/>
-                        </StackPanel>
-                    </Grid>
+                    </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" FontSize="12"
+                                   Margin="0,0,0,10"
+                                   Visibility="{Binding IsLauncherEngine, Converter={StaticResource BoolVis}}"
+                                   Text="Precompiled engine — its targets are already built and cannot be recompiled here. The Configuration above still applies to the dedicated-server build below."/>
                         <ProgressBar Value="{Binding Progress, Mode=OneWay}" Maximum="100"
                                      IsIndeterminate="{Binding ProgressKnown, Converter={StaticResource InvertBool}, Mode=OneWay}"
                                      Margin="0,0,0,12"
                                      Visibility="{Binding IsBusy, Converter={StaticResource BoolVis}}"/>
                         <StackPanel Orientation="Horizontal">
-                            <Button Content="🔨  Build" Style="{StaticResource PrimaryButton}" Command="{Binding BuildCommand}"/>
+                            <Button Content="🔨  Build" Style="{StaticResource PrimaryButton}" Command="{Binding BuildCommand}"
+                                    Visibility="{Binding IsSourceEngine, Converter={StaticResource BoolVis}}"/>
                             <Button Content="✖ Cancel" Command="{Binding CancelCommand}"/>
-                            <Button Content="Open UE5.sln" Command="{Binding OpenSolutionCommand}"/>
+                            <Button Content="Open UE5.sln" Command="{Binding OpenSolutionCommand}"
+                                    Visibility="{Binding IsSourceEngine, Converter={StaticResource BoolVis}}"/>
                             <Button Content="Open engine folder" Command="{Binding OpenFolderCommand}"/>
                         </StackPanel>
                     </StackPanel>
@@ -285,7 +334,7 @@
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,10"
-                                   Text="Compile your project's dedicated-server target with this source engine — the reason many teams switch to source builds in the first place. Uses the Configuration selected above."/>
+                                   Text="Compile your project's dedicated-server target against the selected engine — works with a source build and with a precompiled Epic Games Launcher engine. Uses the Configuration selected above."/>
 
                         <TextBlock Text="Project (.uproject)" Style="{StaticResource LabelText}"/>
                         <Grid>
@@ -394,19 +443,20 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="4">
                 <TextBlock Text="Sync &amp; Launch" Style="{StaticResource HeaderText}"/>
-                <TextBlock Style="{StaticResource SubHeaderText}"
-                           Text="One button: pull the latest from Perforce, rebuild changed engine code, and open the editor — the classic UGS workflow."/>
+                <TextBlock Style="{StaticResource SubHeaderText}" Text="{Binding Intro}"/>
 
                 <Control Template="{StaticResource StatusStrip}"/>
 
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="Steps" Style="{StaticResource LabelText}"/>
-                        <CheckBox Content="1.  Sync latest from Perforce" IsChecked="{Binding StepSync}"/>
-                        <CheckBox Content="2.  Build engine target" IsChecked="{Binding StepBuild}"/>
-                        <CheckBox Content="3.  Full project recompile — deletes Intermediate / Binaries / DDC / .vs, regenerates project files, rebuilds (fixes 'Missing Modules')"
-                                  IsChecked="{Binding StepBuildProject}"/>
-                        <CheckBox Content="4.  Launch editor" IsChecked="{Binding StepLaunch}"/>
+                        <TextBlock Text="{Binding EngineSummary}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                        <CheckBox Content="{Binding StepSyncLabel}" IsChecked="{Binding StepSync}"/>
+                        <CheckBox Content="{Binding StepBuildLabel}" IsChecked="{Binding StepBuild}"
+                                  Visibility="{Binding IsSourceEngine, Converter={StaticResource BoolVis}}"/>
+                        <CheckBox Content="{Binding StepBuildProjectLabel}" IsChecked="{Binding StepBuildProject}"/>
+                        <CheckBox Content="{Binding StepLaunchLabel}" IsChecked="{Binding StepLaunch}"/>
                     </StackPanel>
                 </Border>
 
