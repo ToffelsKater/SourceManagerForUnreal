@@ -7,7 +7,7 @@ using UnrealManager.Services;
 
 namespace UnrealManager.ViewModels;
 
-public sealed partial class BuildViewModel : PageViewModel
+public sealed partial class BuildViewModel : ProjectPageViewModel
 {
     public override string Title => "Build";
     public override string Icon => "🔨"; // hammer
@@ -52,7 +52,6 @@ public sealed partial class BuildViewModel : PageViewModel
     public ICommand CancelCommand { get; }
     public ICommand OpenSolutionCommand { get; }
     public ICommand OpenFolderCommand { get; }
-    public ICommand BrowseProjectCommand { get; }
     public ICommand CreateServerTargetCommand { get; }
     public ICommand BuildServerCommand { get; }
     public ICommand LaunchServerCommand { get; }
@@ -71,7 +70,6 @@ public sealed partial class BuildViewModel : PageViewModel
         OpenFolderCommand = new RelayCommand(_ => OpenFolder(),
             _ => Directory.Exists(ConfigService.Config.EngineRoot));
 
-        BrowseProjectCommand = new RelayCommand(_ => BrowseProject());
         CreateServerTargetCommand = new RelayCommand(_ => CreateServerTarget(),
             _ => !IsBusy && ProjectSet && EngineService.ProjectHasSource(ProjectPath) &&
                  EngineService.FindServerTargetName(ProjectPath) is null);
@@ -93,17 +91,8 @@ public sealed partial class BuildViewModel : PageViewModel
 
     /* ---------------- dedicated server (project) ---------------- */
 
-    public string ProjectPath
-    {
-        get => ConfigService.Config.ProjectPath;
-        set
-        {
-            ConfigService.Config.ProjectPath = value;
-            ConfigService.Save();
-            OnPropertyChanged();
-            RefreshServerStatus();
-        }
-    }
+    /// <summary>The server exe and its target are read out of the project, so both follow it.</summary>
+    protected override void OnProjectPathChanged() => RefreshServerStatus();
 
     private bool ProjectSet => !string.IsNullOrWhiteSpace(ProjectPath) && File.Exists(ProjectPath);
 
@@ -137,7 +126,7 @@ public sealed partial class BuildViewModel : PageViewModel
     {
         if (!ProjectSet)
         {
-            ServerStatus = "Select your .uproject (shared with the Sync & Launch tab).";
+            ServerStatus = "Pick your project above (shared with the Sync & Launch tab).";
             return;
         }
         if (!EngineService.ProjectHasSource(ProjectPath))
@@ -155,16 +144,6 @@ public sealed partial class BuildViewModel : PageViewModel
         ServerStatus = ServerExeExists
             ? $"Server target: {target}. Built for {Configuration} - ready to launch."
             : $"Server target: {target}. Not built yet for {Configuration}.";
-    }
-
-    private void BrowseProject()
-    {
-        var dialog = new Microsoft.Win32.OpenFileDialog
-        {
-            Title = "Select the Unreal project to build a dedicated server for",
-            Filter = "Unreal Project (*.uproject)|*.uproject",
-        };
-        if (dialog.ShowDialog() == true) ProjectPath = dialog.FileName;
     }
 
     private void CreateServerTarget()

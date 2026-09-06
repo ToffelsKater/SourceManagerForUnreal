@@ -8,7 +8,11 @@ public abstract class PageViewModel : ObservableObject
     public abstract string Title { get; }
     public abstract string Icon { get; }
 
-    protected PageViewModel() => ConfigService.EngineChanged += OnEngineChanged;
+    protected PageViewModel()
+    {
+        ConfigService.EngineChanged += OnEngineChanged;
+        ConfigService.BranchChanged += OnBranchChanged;
+    }
 
     /// <summary>The engine folder every page works against.</summary>
     protected static string EngineRootPath => ConfigService.Config.EngineRoot;
@@ -46,6 +50,12 @@ public abstract class PageViewModel : ObservableObject
         OnPropertyChanged(nameof(IsLauncherEngine));
         OnPropertyChanged(nameof(EngineSummary));
     }
+
+    /// <summary>
+    /// Called after the active branch changed. Branch settings are read straight out of the config,
+    /// so a page only has to re-raise the properties bound to them. Passing null refreshes them all.
+    /// </summary>
+    protected virtual void OnBranchChanged() => OnPropertyChanged(null);
 
     private bool _isBusy;
     public bool IsBusy { get => _isBusy; protected set => Set(ref _isBusy, value); }

@@ -7,7 +7,7 @@ using UnrealManager.Services;
 
 namespace UnrealManager.ViewModels;
 
-public sealed class SyncLaunchViewModel : PageViewModel
+public sealed class SyncLaunchViewModel : ProjectPageViewModel
 {
     public override string Title => "Sync & Launch";
     public override string Icon => "🚀"; // rocket
@@ -18,6 +18,38 @@ public sealed class SyncLaunchViewModel : PageViewModel
           "the classic UGS workflow."
         : "One button: pull the latest from Perforce, rebuild your project against the precompiled engine, " +
           "and open the editor.";
+
+    /* ---- branch: one choice repoints the workspace, stream, project and launch arguments ---- */
+
+    public ObservableCollection<string> Branches { get; } = [];
+
+    public string ActiveBranch
+    {
+        get => ConfigService.ActiveBranch.Name;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value)) return;
+            ConfigService.ActivateBranch(value);
+        }
+    }
+
+    /// <summary>One line naming the branch and where it syncs from — the header of the whole run.</summary>
+    public string BranchSummary
+    {
+        get
+        {
+            var cfg = ConfigService.Config;
+            var stream = string.IsNullOrWhiteSpace(cfg.P4Stream) ? "no stream set" : cfg.P4Stream;
+            var client = string.IsNullOrWhiteSpace(cfg.P4Client) ? "no workspace set" : cfg.P4Client;
+            var revision = PerforceService.NormalizeRevision(cfg.P4Changelist);
+            return $"Branch '{ConfigService.ActiveBranch.Name}': {stream} via workspace {client}" +
+                   (revision.Length == 0 ? "" : $", pinned to {revision}") +
+                   " — edit these on the Perforce tab.";
+        }
+    }
+
+    /// <summary>Step 4 can open the editor with no project at all, so the picker offers that too.</summary>
+    protected override bool AllowNoProject => true;
 
     public bool StepSync
     {
@@ -43,12 +75,6 @@ public sealed class SyncLaunchViewModel : PageViewModel
         set { ConfigService.Config.StepLaunch = value; ConfigService.Save(); OnPropertyChanged(); }
     }
 
-    public string ProjectPath
-    {
-        get => ConfigService.Config.ProjectPath;
-        set { ConfigService.Config.ProjectPath = value; ConfigService.Save(); OnPropertyChanged(); }
-    }
-
     public string LaunchArgs
     {
         get => ConfigService.Config.LaunchArgs;
@@ -61,7 +87,17 @@ public sealed class SyncLaunchViewModel : PageViewModel
     /* ---- step labels: the engine build step disappears for a precompiled launcher engine,
             so the remaining steps have to renumber themselves. ---- */
 
-    public string StepSyncLabel => "1.  Sync latest from Perforce";
+    public string StepSyncLabel
+    {
+        get
+        {
+            var cfg = ConfigService.Config;
+            var label = "1.  Sync latest from Perforce";
+            if (!string.IsNullOrWhiteSpace(cfg.P4Stream))
+                label += $" — switching the workspace to {cfg.P4Stream} first if it is on another stream";
+            return label;
+        }
+    }
 
     public string StepBuildLabel => "2.  Build engine target";
 
@@ -77,18 +113,18 @@ public sealed class SyncLaunchViewModel : PageViewModel
 
     public ObservableCollection<CheckItem> SanityResults { get; } = [];
 
-    public ICommand BrowseProjectCommand { get; }
     public ICommand RunCommand { get; }
     public ICommand SanityCheckCommand { get; }
     public ICommand CancelCommand { get; }
 
     public SyncLaunchViewModel()
     {
-        BrowseProjectCommand = new RelayCommand(_ => BrowseProject());
         RunCommand = new AsyncRelayCommand(_ => RunAsync(),
             _ => !IsBusy && (StepSync || WillBuildEngine || StepBuildProject || StepLaunch));
         SanityCheckCommand = new AsyncRelayCommand(_ => SanityCheckAsync(), _ => !IsBusy);
         CancelCommand = new RelayCommand(_ => Cancel(), _ => IsBusy);
+
+        RefreshBranches();
     }
 
     protected override void OnEngineChanged()
@@ -97,6 +133,24 @@ public sealed class SyncLaunchViewModel : PageViewModel
         OnPropertyChanged(nameof(Intro));
         OnPropertyChanged(nameof(StepBuildProjectLabel));
         OnPropertyChanged(nameof(StepLaunchLabel));
+    }
+
+    protected override void OnBranchChanged()
+    {
+        base.OnBranchChanged();
+        RefreshBranches();
+        // The previous branch's results describe a workspace this page no longer points at.
+        SanityResults.Clear();
+        StepStatus = "";
+    }
+
+    private void RefreshBranches()
+    {
+        Branches.Clear();
+        foreach (var branch in ConfigService.BranchList) Branches.Add(branch.Name);
+        OnPropertyChanged(nameof(ActiveBranch));
+        OnPropertyChanged(nameof(BranchSummary));
+        OnPropertyChanged(nameof(StepSyncLabel));
     }
 
     /// <summary>
@@ -157,9 +211,30 @@ public sealed class SyncLaunchViewModel : PageViewModel
                 if (login.Success)
                 {
                     var clients = await PerforceService.ListClientsAsync(conn, ct);
-                    Add("Perforce workspace exists", clients.Contains(cfg.P4Client),
+                    var clientExists = clients.Contains(cfg.P4Client);
+                    Add("Perforce workspace exists", clientExists,
                         cfg.P4Client,
                         $"Workspace '{cfg.P4Client}' not found for user {cfg.P4User} — pick one on the 'Perforce' tab");
+
+                    // Syncing one branch and launching another branch's .uproject is the classic
+                    // way to lose an afternoon, so the branch's stream is checked against reality.
+                    if (clientExists && !string.IsNullOrWhiteSpace(cfg.P4Stream))
+                    {
+                        var current = await PerforceService.GetClientStreamAsync(conn, cfg.P4Client, ct);
+                        if (current is null)
+                        {
+                            Add($"Workspace is on {cfg.P4Stream}", false, "",
+                                $"'{cfg.P4Client}' is not a stream workspace — use a stream workspace for this " +
+                                "branch, or clear the stream on the 'Perforce' tab");
+                        }
+                        else
+                        {
+                            var onStream = string.Equals(current, cfg.P4Stream, StringComparison.OrdinalIgnoreCase);
+                            Add($"Workspace is on {cfg.P4Stream}", onStream,
+                                current,
+                                $"currently on {current} — the sync step will switch it", blocking: false);
+                        }
+                    }
                 }
             }
         }
@@ -194,7 +269,7 @@ public sealed class SyncLaunchViewModel : PageViewModel
             Add("Project file (.uproject)",
                 !string.IsNullOrWhiteSpace(ProjectPath) && File.Exists(ProjectPath),
                 ProjectPath,
-                "Select your .uproject above (or untick step 3)");
+                "Pick your project above (or untick step 3)");
         }
 
         if (StepLaunch && engineOk)
@@ -233,16 +308,6 @@ public sealed class SyncLaunchViewModel : PageViewModel
             : $"Sanity check found {issues} blocking issue(s) — see the list below.";
     });
 
-    private void BrowseProject()
-    {
-        var dialog = new Microsoft.Win32.OpenFileDialog
-        {
-            Title = "Select an Unreal project (optional — leave empty to launch the editor alone)",
-            Filter = "Unreal Project (*.uproject)|*.uproject",
-        };
-        if (dialog.ShowDialog() == true) ProjectPath = dialog.FileName;
-    }
-
     private Task RunAsync() => RunBusyAsync("Sync & Launch", async ct =>
     {
         var cfg = ConfigService.Config;
@@ -256,7 +321,43 @@ public sealed class SyncLaunchViewModel : PageViewModel
                 StepStatus = "Perforce workspace not configured — set it on the Perforce tab.";
                 return;
             }
-            var sync = await PerforceService.SyncAsync(conn, cfg.P4SyncPath, cfg.P4ForceSync, cfg.P4ParallelSync, Log, ct);
+
+            // Put the workspace on this branch's stream before syncing, so the sync (and everything
+            // built and launched after it) can only ever come from the branch that was selected.
+            if (!string.IsNullOrWhiteSpace(cfg.P4Stream))
+            {
+                StepStatus = $"Step: switching workspace to {cfg.P4Stream}…";
+                var current = await PerforceService.GetClientStreamAsync(conn, conn.Client, ct);
+                if (current is null)
+                {
+                    StepStatus = $"Branch '{ConfigService.ActiveBranch.Name}' expects stream {cfg.P4Stream}, but " +
+                                 $"'{conn.Client}' is not a stream workspace — aborting rather than syncing the " +
+                                 "wrong branch. Use a stream workspace, or clear the stream on the Perforce tab.";
+                    return;
+                }
+
+                if (string.Equals(current, cfg.P4Stream, StringComparison.OrdinalIgnoreCase))
+                {
+                    Log($"Workspace '{conn.Client}' is already on {cfg.P4Stream}.");
+                }
+                else
+                {
+                    Log($"Switching workspace '{conn.Client}' from {current} to {cfg.P4Stream}…");
+                    var switched = await PerforceService.SwitchStreamAsync(conn, cfg.P4Stream, Log, ct);
+                    if (!switched.Success)
+                    {
+                        StepStatus = $"Stream switch failed (exit code {switched.ExitCode}) — aborting. " +
+                                     "Files left open for edit in the workspace will block it.";
+                        return;
+                    }
+                    Log($"Workspace switched to {cfg.P4Stream}.");
+                }
+            }
+
+            var revision = PerforceService.NormalizeRevision(cfg.P4Changelist);
+            StepStatus = revision.Length == 0 ? "Step: Perforce sync…" : $"Step: Perforce sync to {revision}…";
+            var sync = await PerforceService.SyncAsync(
+                conn, cfg.P4SyncPath, cfg.P4Changelist, cfg.P4ForceSync, cfg.P4ParallelSync, Log, ct);
             if (!sync.Success && !sync.StdErr.Contains("up-to-date"))
             {
                 StepStatus = $"Sync failed (exit code {sync.ExitCode}) — aborting.";

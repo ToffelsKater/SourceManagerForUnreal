@@ -12,7 +12,9 @@ public static class ProcessRunner
 {
     /// <summary>
     /// Runs a process asynchronously, streaming stdout/stderr line by line to <paramref name="onOutput"/>.
-    /// Cancellation kills the whole process tree.
+    /// Cancellation kills the whole process tree. <paramref name="environment"/> adds or overrides
+    /// environment variables for this one process (e.g. GIT_TERMINAL_PROMPT=0 so an unattended git
+    /// command fails instead of waiting for credentials).
     /// </summary>
     public static async Task<ProcessResult> RunAsync(
         string fileName,
@@ -20,7 +22,8 @@ public static class ProcessRunner
         string? workingDirectory = null,
         Action<string>? onOutput = null,
         CancellationToken ct = default,
-        string? stdin = null)
+        string? stdin = null,
+        IReadOnlyDictionary<string, string>? environment = null)
     {
         var psi = new ProcessStartInfo
         {
@@ -33,6 +36,10 @@ public static class ProcessRunner
             RedirectStandardError = true,
             RedirectStandardInput = stdin is not null,
         };
+
+        if (environment is not null)
+            foreach (var (key, value) in environment)
+                psi.Environment[key] = value;
 
         using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
         var stdout = new StringBuilder();

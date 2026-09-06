@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>UnrealManager</AssemblyName>
     <RootNamespace>UnrealManager</RootNamespace>
-    <Version>1.1.0</Version>
+    <Version>1.3.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 

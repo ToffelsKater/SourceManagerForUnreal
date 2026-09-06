@@ -22,6 +22,42 @@
         </Border>
     </ControlTemplate>
 
+    <!-- Shared project picker: the projects found on this PC, plus Browse… for anything the scan
+         missed. Selecting one also switches the app to the engine that project was made with. -->
+    <ControlTemplate x:Key="ProjectPicker">
+        <StackPanel>
+            <Grid Visibility="{Binding HasDetectedProjects, Converter={StaticResource BoolVis}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <!-- An explicit ItemTemplate, not DisplayMemberPath: the closed combo renders
+                     ItemTemplate, and DisplayMemberPath does not populate it. -->
+                <ComboBox Grid.Column="0" ItemsSource="{Binding DetectedProjects}"
+                          SelectedItem="{Binding SelectedProject}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Display}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Grid.Column="1" Content="↻ Rescan" Margin="8,0,0,0"
+                        Command="{Binding RefreshProjectsCommand}"/>
+                <Button Grid.Column="2" Content="Browse…" Margin="8,0,0,0"
+                        Command="{Binding BrowseProjectCommand}"/>
+            </Grid>
+            <StackPanel Orientation="Horizontal"
+                        Visibility="{Binding HasDetectedProjects, Converter={StaticResource BoolVis}, ConverterParameter=Invert}">
+                <Button Content="↻ Rescan" Command="{Binding RefreshProjectsCommand}"/>
+                <Button Content="Browse…" Command="{Binding BrowseProjectCommand}"/>
+            </StackPanel>
+            <TextBlock Text="{Binding ProjectEngineStatus}" Foreground="{StaticResource MutedBrush}"
+                       FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"
+                       Visibility="{Binding ProjectEngineStatus, Converter={StaticResource StrVis}}"/>
+        </StackPanel>
+    </ControlTemplate>
+
     <!-- ============================ GUIDE / TUTORIAL ============================ -->
     <DataTemplate DataType="{x:Type vm:TutorialViewModel}">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -62,8 +98,8 @@
                         <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="2  "/><Run FontFamily="Segoe UI Semibold" Text="GitHub access"/><Run Text=" — the engine source is in a private repository: link your GitHub account to your Epic Games account ('Link GitHub to Epic' button on the Get Source tab) and accept the invitation e-mail from GitHub. 'Test GitHub access' tells you when it works."/></TextBlock>
                         <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="3  "/><Run FontFamily="Segoe UI Semibold" Text="Get Source"/><Run Text=" — already have an engine from the Epic Games Launcher? Pick it under 'Engines found on this PC' and skip straight to step 5. For a source build, pick an engine folder (needs ~200 GB free) and a branch (e.g. 5.8, or 'release' for the latest stable), then 'Clone + Setup + Generate'. This downloads tens of GB and takes a while; the log shows progress."/></TextBlock>
                         <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="4  "/><Run FontFamily="Segoe UI Semibold" Text="Build"/><Run Text=" — target 'UnrealEditor', configuration 'Development', press Build. A clean build takes 1–3 hours depending on CPU. ShaderCompileWorker is built automatically."/></TextBlock>
-                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="5  "/><Run FontFamily="Segoe UI Semibold" Text="Perforce"/><Run Text=" — enter the team's server address, your user name and password, log in, then pick your workspace (create workspaces in P4V — button provided)."/></TextBlock>
-                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="6  "/><Run FontFamily="Segoe UI Semibold" Text="Sync &amp; Launch"/><Run Text=" — select your .uproject, tick the steps you want, and use '🔍 Sanity check' to verify everything before the first run."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="5  "/><Run FontFamily="Segoe UI Semibold" Text="Perforce"/><Run Text=" — enter the team's server address, your user name and password, log in, then pick your workspace (create workspaces in P4V — button provided). Working in more than one stream? Add a branch per stream: each one remembers its own stream, workspace, project and launch arguments."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="6  "/><Run FontFamily="Segoe UI Semibold" Text="Sync &amp; Launch"/><Run Text=" — pick your project from the list of the ones found on this PC (which also switches to the engine that project was made with), tick the steps you want, and use '🔍 Sanity check' to verify everything before the first run."/></TextBlock>
                     </StackPanel>
                 </Border>
 
@@ -71,10 +107,10 @@
                     <StackPanel>
                         <TextBlock FontFamily="Segoe UI Semibold" FontSize="14" Text="The tabs in detail" Margin="0,0,0,8"/>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔧 Dependencies"/><Run Text=" — verifies Git, Perforce and Visual Studio incl. every workload Unreal needs (C++ desktop &amp; game development, MSVC v143, Windows SDK). One click installs whatever is missing."/></TextBlock>
-                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="⬇ Get Source"/><Run Text=" — auto-detects every engine installed on the PC (Epic Games Launcher builds and source trees) and lets you pick the one the app works against. For source builds it also clones Epic's UnrealEngine repository, runs Setup.bat (downloads binary dependencies) and GenerateProjectFiles.bat (creates UE5.sln). Steps can also be run individually, e.g. to re-run Setup.bat after switching branches."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="⬇ Get Source"/><Run Text=" — auto-detects every engine installed on the PC (Epic Games Launcher builds and source trees) and lets you pick the one the app works against. The 'Engine version' card compares the selected engine against Epic's release tags on GitHub, so you find out that 5.8.2 shipped while you are still on 5.8.0; for a cloned source tree it updates in place (checkout, Setup.bat, GenerateProjectFiles), for a launcher engine it points you at the Epic Games Launcher. For source builds it also clones Epic's UnrealEngine repository, runs Setup.bat (downloads binary dependencies) and GenerateProjectFiles.bat (creates UE5.sln). Steps can also be run individually, e.g. to re-run Setup.bat after switching branches."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔨 Build"/><Run Text=" — with a source engine, compiles any engine target (editor, ShaderCompileWorker, UnrealPak, …) in any configuration with live progress. Also creates and compiles your project's dedicated-server target — one of the main reasons to use a source build. 'Open UE5.sln' jumps into Visual Studio for engine code work. With a precompiled launcher engine the engine-build controls are hidden and only the dedicated-server section remains."/></TextBlock>
-                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔁 Perforce"/><Run Text=" — connection, login (your password is never stored — only Perforce's own session ticket), workspace selection and manual sync with force/parallel options."/></TextBlock>
-                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🚀 Sync &amp; Launch"/><Run Text=" — the daily-driver button: sync latest from Perforce → rebuild engine → rebuild your project's modules → launch the editor. Each step is optional; most days you only need sync + launch. On a precompiled launcher engine the engine-rebuild step is dropped and the rest renumber."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔁 Perforce"/><Run Text=" — connection, login (your password is never stored — only Perforce's own session ticket), workspace selection and manual sync with force/parallel options. Branches live here too: one per stream, each holding its stream, workspace, sync path, changelist, project and launch arguments, so switching branch repoints everything at once instead of five fields by hand. 'Switch workspace' runs p4 switch on the selected stream. It also lists your pending changelists (including the default one), shows exactly which files each holds, and submits the one you pick after a confirmation naming the server, workspace and files."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🚀 Sync &amp; Launch"/><Run Text=" — the daily-driver button: pick the branch, then sync latest from Perforce → rebuild engine → rebuild your project's modules → launch the editor. When the branch names a stream, the workspace is switched to it before syncing, so you can never sync one branch and launch another. Each step is optional; most days you only need sync + launch. On a precompiled launcher engine the engine-rebuild step is dropped and the rest renumber."/></TextBlock>
                     </StackPanel>
                 </Border>
 
@@ -192,8 +228,16 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
+                            <!-- An explicit ItemTemplate, not DisplayMemberPath: the closed combo renders
+                                 ItemTemplate, and DisplayMemberPath does not populate it. -->
                             <ComboBox Grid.Column="0" ItemsSource="{Binding DetectedEngines}"
-                                      SelectedItem="{Binding SelectedEngine}" DisplayMemberPath="Display"/>
+                                      SelectedItem="{Binding SelectedEngine}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Display}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                             <Button Grid.Column="1" Content="↻ Rescan" Margin="8,0,0,0"
                                     Command="{Binding RefreshEnginesCommand}"/>
                         </Grid>
@@ -202,6 +246,41 @@
                                 Visibility="{Binding HasDetectedEngines, Converter={StaticResource BoolVis}, ConverterParameter=Invert}"/>
                         <TextBlock Text="{Binding EngineSummary}" Foreground="{StaticResource MutedBrush}"
                                    FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Engine version" Style="{StaticResource LabelText}"/>
+                        <TextBlock Text="{Binding UpdateMessage}" TextWrapping="Wrap" FontSize="12.5"
+                                   Foreground="{Binding UpdateColor, Converter={StaticResource StrBrush}}"/>
+
+                        <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" FontSize="12"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   Visibility="{Binding CanUpdateInPlace, Converter={StaticResource BoolVis}}"
+                                   Text="Updating checks out the release tag, re-runs Setup.bat for that version&apos;s binary dependencies and regenerates the project files. Local changes to engine code block the update, and the editor has to be rebuilt on the Build tab afterwards."/>
+
+                        <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" FontSize="12"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   Visibility="{Binding ShowLauncherUpdate, Converter={StaticResource BoolVis}}"
+                                   Text="This is a precompiled engine, so the update has to come from the Epic Games Launcher — install it there, then press Rescan above and select it."/>
+
+                        <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" FontSize="12"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   Visibility="{Binding ShowUnmanagedUpdate, Converter={StaticResource BoolVis}}"
+                                   Text="This engine folder has the source but no git history (it was not cloned), so it cannot be moved to the newer tag from here — clone the newer release into a fresh folder instead."/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button Content="↻  Check for updates" Command="{Binding CheckUpdatesCommand}"/>
+                            <Button Content="{Binding UpdateButtonText}" Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding UpdateEngineCommand}"
+                                    Visibility="{Binding CanUpdateInPlace, Converter={StaticResource BoolVis}}"/>
+                            <Button Content="Open Epic Games Launcher ↗" Command="{Binding OpenLauncherCommand}"
+                                    Visibility="{Binding ShowLauncherUpdate, Converter={StaticResource BoolVis}}"/>
+                        </StackPanel>
+
+                        <CheckBox Margin="0,10,0,0" IsChecked="{Binding CheckUpdatesAutomatically}"
+                                  Content="Check GitHub for a newer release automatically"/>
                     </StackPanel>
                 </Border>
 
@@ -336,15 +415,10 @@
                         <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,10"
                                    Text="Compile your project's dedicated-server target against the selected engine — works with a source build and with a precompiled Epic Games Launcher engine. Uses the Configuration selected above."/>
 
-                        <TextBlock Text="Project (.uproject)" Style="{StaticResource LabelText}"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0" Text="{Binding ProjectPath, UpdateSourceTrigger=PropertyChanged}"/>
-                            <Button Grid.Column="1" Content="Browse…" Command="{Binding BrowseProjectCommand}" Margin="8,0,0,0"/>
-                        </Grid>
+                        <TextBlock Text="Project" Style="{StaticResource LabelText}"/>
+                        <TextBlock Text="{Binding ProjectDiscoveryStatus}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                        <Control Template="{StaticResource ProjectPicker}"/>
 
                         <TextBlock Text="{Binding ServerStatus}" Foreground="{StaticResource MutedBrush}"
                                    FontSize="12.5" Margin="0,8,0,10"/>
@@ -372,9 +446,34 @@
             <StackPanel Margin="4">
                 <TextBlock Text="Perforce" Style="{StaticResource HeaderText}"/>
                 <TextBlock Style="{StaticResource SubHeaderText}"
-                           Text="Connect to a Helix Core (Perforce) server, log in, pick a workspace, and sync."/>
+                           Text="Connect to a Helix Core (Perforce) server, log in, pick a branch to work on, and sync."/>
 
                 <Control Template="{StaticResource StatusStrip}"/>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Branch" Style="{StaticResource LabelText}"/>
+                        <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="12" TextWrapping="Wrap"
+                                   Margin="0,0,0,8"
+                                   Text="A branch remembers its stream, workspace, sync path, project and launch arguments together. Switching branches here repoints the whole Sync &amp; Launch pipeline at once — everything below belongs to the selected branch."/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" ItemsSource="{Binding Branches}"
+                                      SelectedItem="{Binding ActiveBranch}"/>
+                            <Button Grid.Column="1" Content="+ Add branch" Margin="8,0,0,0"
+                                    Command="{Binding AddBranchCommand}"/>
+                            <Button Grid.Column="2" Content="Remove" Margin="8,0,0,0"
+                                    Command="{Binding RemoveBranchCommand}"/>
+                        </Grid>
+
+                        <TextBlock Text="Branch name" Style="{StaticResource LabelText}" Margin="0,10,0,3"/>
+                        <TextBox Text="{Binding BranchName}"/>
+                    </StackPanel>
+                </Border>
 
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
@@ -420,8 +519,32 @@
                         <ComboBox IsEditable="True" ItemsSource="{Binding Clients}"
                                   Text="{Binding Client, UpdateSourceTrigger=PropertyChanged}"/>
 
+                        <TextBlock Text="Stream (e.g. //Game/Main) — leave empty for a non-stream workspace"
+                                   Style="{StaticResource LabelText}" Margin="0,10,0,3"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" IsEditable="True" ItemsSource="{Binding Streams}"
+                                      Text="{Binding Stream, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button Grid.Column="1" Content="List streams" Margin="8,0,0,0"
+                                    Command="{Binding ListStreamsCommand}"/>
+                            <Button Grid.Column="2" Content="Switch workspace" Margin="8,0,0,0"
+                                    Command="{Binding SwitchStreamCommand}"/>
+                        </Grid>
+                        <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,4,0,0"
+                                   TextWrapping="Wrap"
+                                   Text="{Binding CurrentStream, StringFormat='Workspace is currently on {0}.'}"
+                                   Visibility="{Binding CurrentStream, Converter={StaticResource StrVis}}"/>
+
                         <TextBlock Text="Sync path (optional, e.g. //depot/project/...)" Style="{StaticResource LabelText}" Margin="0,10,0,3"/>
                         <TextBox Text="{Binding SyncPath, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock Text="Sync to changelist or label (optional — empty means latest)"
+                                   Style="{StaticResource LabelText}" Margin="0,10,0,3"/>
+                        <TextBox Text="{Binding Changelist, UpdateSourceTrigger=PropertyChanged}"/>
 
                         <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                             <CheckBox Content="Force sync (-f)" IsChecked="{Binding ForceSync}" Margin="0,0,16,0"/>
@@ -431,6 +554,81 @@
                         <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                             <Button Content="🔁  Sync now" Style="{StaticResource PrimaryButton}" Command="{Binding SyncCommand}"/>
                             <Button Content="✖ Cancel" Command="{Binding CancelCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Pending changelists" Style="{StaticResource LabelText}"/>
+                        <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="12" TextWrapping="Wrap"
+                                   Margin="0,0,0,8"
+                                   Text="Your own pending changelists in this workspace, including the default one. Submitting publishes the files to everyone on the server, so the exact list is shown for confirmation first."/>
+                        <Border Background="{StaticResource PanelAltBrush}" BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1,1,1,0" CornerRadius="3,3,0,0" Padding="10,5">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="90"/>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="60"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Change" FontFamily="Segoe UI Semibold" FontSize="12"
+                                           Foreground="{StaticResource MutedBrush}"/>
+                                <TextBlock Grid.Column="1" Text="User" FontFamily="Segoe UI Semibold" FontSize="12"
+                                           Foreground="{StaticResource MutedBrush}"/>
+                                <TextBlock Grid.Column="2" Text="Description" FontFamily="Segoe UI Semibold" FontSize="12"
+                                           Foreground="{StaticResource MutedBrush}"/>
+                                <TextBlock Grid.Column="3" Text="Files" FontFamily="Segoe UI Semibold" FontSize="12"
+                                           Foreground="{StaticResource MutedBrush}" TextAlignment="Right"/>
+                            </Grid>
+                        </Border>
+                        <ListBox ItemsSource="{Binding PendingChanges}" SelectedItem="{Binding SelectedChange}"
+                                 MaxHeight="170" MinHeight="46">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="90"/>
+                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="60"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Id}" FontFamily="Segoe UI Semibold"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding User}" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding DescriptionDisplay}"
+                                                   TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Column="3" Text="{Binding FileCount}" TextAlignment="Right"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <TextBlock Text="Description" Style="{StaticResource LabelText}" Margin="0,10,0,3"/>
+                        <TextBox Text="{Binding ChangeDescription, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True" TextWrapping="Wrap" MinHeight="52" MaxHeight="120"
+                                 VerticalScrollBarVisibility="Auto"/>
+
+                        <TextBlock Text="{Binding ChangeSummary}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,8,0,4"/>
+                        <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="3"
+                                MaxHeight="150" Padding="6"
+                                Visibility="{Binding HasSelectedChange, Converter={StaticResource BoolVis}}">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding ChangeFiles}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="11"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="✔  Submit changelist" Command="{Binding SubmitChangeCommand}"/>
+                            <Button Content="🔄  Refresh list" Command="{Binding RefreshChangesCommand}"/>
+                            <Button Content="Open P4V ↗" Command="{Binding OpenP4VCommand}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -449,6 +647,15 @@
 
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
+                        <TextBlock Text="Branch" Style="{StaticResource LabelText}"/>
+                        <ComboBox ItemsSource="{Binding Branches}" SelectedItem="{Binding ActiveBranch}"/>
+                        <TextBlock Text="{Binding BranchSummary}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
                         <TextBlock Text="Steps" Style="{StaticResource LabelText}"/>
                         <TextBlock Text="{Binding EngineSummary}" Foreground="{StaticResource MutedBrush}"
                                    FontSize="12" Margin="0,0,0,8" TextWrapping="Wrap"/>
@@ -462,15 +669,10 @@
 
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
-                        <TextBlock Text="Project (.uproject) — optional" Style="{StaticResource LabelText}"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0" Text="{Binding ProjectPath, UpdateSourceTrigger=PropertyChanged}"/>
-                            <Button Grid.Column="1" Content="Browse…" Command="{Binding BrowseProjectCommand}" Margin="8,0,0,0"/>
-                        </Grid>
+                        <TextBlock Text="Project — optional" Style="{StaticResource LabelText}"/>
+                        <TextBlock Text="{Binding ProjectDiscoveryStatus}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                        <Control Template="{StaticResource ProjectPicker}"/>
 
                         <TextBlock Text="Extra launch arguments" Style="{StaticResource LabelText}" Margin="0,10,0,3"/>
                         <TextBox Text="{Binding LaunchArgs, UpdateSourceTrigger=PropertyChanged}"/>
