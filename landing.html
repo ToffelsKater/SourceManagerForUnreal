@@ -285,12 +285,12 @@
 <section class="hero">
   <div class="wrap hero-grid">
     <div>
-      <span class="pill"><span class="dot"></span> Free forever &middot; Windows 10/11 &middot; v1.0.0</span>
+      <span class="pill"><span class="dot"></span> Free forever &middot; Windows 10/11 &middot; v1.3.0</span>
       <h1><span data-gumroad-field="name">Source Manager for Unreal Engine</span></h1>
       <p class="lede">
-        From an <strong>empty PC</strong> to a <span class="hl" style="font-weight:700">source-built editor</span> &mdash;
-        dependencies, engine clone, compile, Perforce sync and launch, all reduced to buttons you click in order.
-        No build engineer required.
+        From an <strong>empty PC</strong> to a <span class="hl" style="font-weight:700">running Unreal Editor</span> &mdash;
+        dependencies, engine setup, project builds, Perforce sync and launch, all reduced to buttons you click in order.
+        Works with <strong>launcher engines and source builds</strong> alike. No build engineer required.
       </p>
       <div class="cta-row">
         <button class="btn btn-primary btn-lg js-free" type="button">
@@ -304,7 +304,7 @@
       </div>
       <p class="cta-note">No account juggling, no license key. Pay &euro;0 &mdash; or tip if it saves your week.</p>
       <div class="trust">
-        <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> 55.2 MB installer</span>
+        <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> 55.3 MB installer</span>
         <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> No admin rights</span>
         <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> No runtimes to install</span>
         <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Open source</span>
@@ -366,8 +366,8 @@
         <p>Git, Perforce and Visual Studio 2022 with the <em>exact</em> workloads Unreal needs. One click each &mdash; the app detects what's missing.</p>
       </div>
       <div class="step rv"><div class="step-n">2</div>
-        <h3>Get the engine</h3>
-        <p>Verify GitHub&#8596;Epic access, pick a branch, then clone &rarr; Setup.bat &rarr; GenerateProjectFiles &mdash; with live logs and a disk-space check first.</p>
+        <h3>Get an engine</h3>
+        <p>Pick one the app already found on your PC &mdash; launcher or source &mdash; or clone from GitHub: clone &rarr; Setup.bat &rarr; GenerateProjectFiles, with live logs and a disk-space check first.</p>
       </div>
       <div class="step rv"><div class="step-n">3</div>
         <h3>Build the editor</h3>
@@ -379,25 +379,54 @@
       </div>
       <div class="step rv"><div class="step-n">5</div>
         <h3>Sync &amp; Launch</h3>
-        <p>Pull latest &rarr; rebuild engine &rarr; rebuild project modules &rarr; open the editor. Most mornings: one click.</p>
+        <p>Pick your project from the list, then pull latest &rarr; rebuild engine &rarr; rebuild project modules &rarr; open the editor. Most mornings: one click.</p>
       </div>
     </div>
   </div>
 </section>
 
+<!-- PROJECT PICKER SPOTLIGHT -->
+<section id="projects" class="alt">
+  <div class="wrap spot">
+    <div class="rv">
+      <span class="eyebrow">New in v1.3</span>
+      <h2>Pick your project &mdash; the engine follows</h2>
+      <p style="color:var(--muted)">
+        No typing paths, and no opening a 5.7 project against your 5.8 engine. Source Manager finds the
+        projects on your machine &mdash; recent ones, your Unreal Projects folder, a quick sweep of your
+        drives &mdash; and puts them in one list.
+      </p>
+      <p style="color:var(--muted)">
+        Choose one and the whole app repoints at the engine that project actually belongs to. It reads the
+        project's engine association the way Unreal itself does, and when a bare <code>5.8</code> could mean
+        two installs, the project's own generated files and last build decide which one it really is.
+      </p>
+      <button class="btn btn-primary js-free" type="button">Download free</button>
+    </div>
+    <div class="card-mock rv" role="img"
+         aria-label="Project picker showing titanoboa on a 5.8.2 source build and Survivors on a 5.7.4 launcher engine, with a status line saying the engine was switched to match the selected project.">
+      <div class="chk"><span class="g g-ok" aria-hidden="true">&#10003;</span> titanoboa <span class="m">UE 5.8.2, source build</span></div>
+      <div class="chk"><span class="g g-ok" aria-hidden="true">&#10003;</span> Survivors <span class="m">UE 5.7.4, launcher engine</span></div>
+      <div class="chk"><span class="g g-ok" aria-hidden="true">&#10003;</span> TowerDefense <span class="m">UE 5.8.1, launcher engine</span></div>
+      <div class="chk"><span class="g g-bad" aria-hidden="true">&times;</span> BackroomTheBeginning <span class="m">Unreal Engine 5.5 &mdash; not installed</span></div>
+      <div class="mock-status">Engine switched to match titanoboa &mdash; UE 5.8.2 source build, C:\UnrealSource</div>
+    </div>
+  </div>
+</section>
+
 <!-- SANITY SPOTLIGHT -->
-<section class="alt">
+<section>
   <div class="wrap spot">
     <div class="rv">
       <span class="eyebrow">Sanity check</span>
       <h2>When something breaks, it tells you which tab fixes it</h2>
       <p style="color:var(--muted)">
-        One click tests the entire chain &mdash; tools, engine source, dependencies, Visual Studio components,
-        Perforce ticket, workspace, built binaries &mdash; and reports exactly what's wrong and where to fix it.
+        One click tests the entire chain &mdash; tools, engine, dependencies, Visual Studio components,
+        Perforce ticket, workspace, stream, built binaries &mdash; and reports exactly what's wrong and where to fix it.
       </p>
       <p style="color:var(--muted)">
-        It knows the subtle stuff, too: an expired login ticket, a project built against a different
-        engine version, a Setup.bat that never ran.
+        It knows the subtle stuff, too: an expired login ticket, a workspace sitting on the wrong stream,
+        a project built against a different engine version, a Setup.bat that never ran.
       </p>
       <button class="btn btn-primary js-free" type="button">Download free</button>
     </div>
@@ -414,7 +443,7 @@
 </section>
 
 <!-- FEATURES -->
-<section id="features">
+<section id="features" class="alt">
   <div class="wrap">
     <div class="sec-head rv">
       <span class="eyebrow">What's inside</span>
@@ -429,8 +458,8 @@
       </div>
       <div class="feat rv">
         <div class="ico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 11l5 5 5-5M4 20h16"/></svg></div>
-        <h3>Guided engine download</h3>
-        <p>GitHub access test, branch picker, and the whole clone chain &mdash; with a disk-space reality check before you commit your evening.</p>
+        <h3>Every engine on your PC</h3>
+        <p>Finds precompiled Epic Games Launcher installs and GitHub source trees alike, and hides whatever cannot apply to the one you pick.</p>
       </div>
       <div class="feat rv">
         <div class="ico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4l6 6-8 8H6v-6z"/><path d="M4 20h16"/></svg></div>
@@ -440,24 +469,39 @@
       <div class="feat rv">
         <div class="ico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></div>
         <h3>Perforce, properly</h3>
-        <p>Login, workspace picker, parallel sync. Passwords never touch disk &mdash; only P4's own ticket.</p>
+        <p>Login, workspace picker, parallel sync, stream switching, pending changelists and submit. Passwords never touch disk &mdash; only P4's own ticket.</p>
       </div>
       <div class="feat rv">
         <div class="ico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg></div>
         <h3>"Missing Modules" &mdash; solved</h3>
-        <p>Moving a launcher-built project to your source engine? One checkbox rebuilds its modules on the way to launch.</p>
+        <p>Moving a launcher-built project to your source engine? One checkbox wipes the stale build folders and rebuilds its modules on the way to launch.</p>
       </div>
       <div class="feat rv">
         <div class="ico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
         <h3>Nothing phones home</h3>
         <p>Settings live in your own user profile. The source is public &mdash; verify it yourself.</p>
       </div>
+      <div class="feat rv">
+        <div class="ico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><circle cx="18" cy="8" r="2.6"/><path d="M6 8.6v6.8M8.6 6h4.4a3 3 0 0 1 3 3v0"/></svg></div>
+        <h3>A branch per stream</h3>
+        <p>Each branch keeps its own stream, workspace, sync path, changelist, project and engine &mdash; switch once and everything repoints together.</p>
+      </div>
+      <div class="feat rv">
+        <div class="ico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="11" rx="2"/><path d="M8 20h8M12 15v5"/></svg></div>
+        <h3>Dedicated servers</h3>
+        <p>Creates the server target if your project has none, compiles it against the selected engine, and launches it with your own arguments.</p>
+      </div>
+      <div class="feat rv">
+        <div class="ico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V9M7 13l5-5 5 5"/><path d="M4 4h16"/></svg></div>
+        <h3>Engine update checks</h3>
+        <p>Tells you when Epic shipped a newer patch, and moves a cloned source tree onto it &mdash; checkout, Setup.bat, regenerate &mdash; without eating your local engine changes.</p>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- REQUIREMENTS -->
-<section id="requirements" class="alt">
+<section id="requirements">
   <div class="wrap">
     <div class="sec-head rv">
       <span class="eyebrow">Before you start</span>
@@ -466,15 +510,15 @@
     </div>
     <div class="reqs">
       <div class="req rv"><strong>Windows 10 / 11</strong><span>64-bit</span></div>
-      <div class="req rv"><strong>Epic + GitHub linked</strong><span>Free &mdash; required by Epic. The app walks you through it.</span></div>
-      <div class="req rv"><strong>~200 GB free</strong><span>For a full engine source build</span></div>
+      <div class="req rv"><strong>An Unreal Engine</strong><span>From the Epic Games Launcher, or built from source with the app's help</span></div>
+      <div class="req rv"><strong>For a source build</strong><span>Epic account linked to GitHub (free, required by Epic) and ~200 GB free</span></div>
       <div class="req rv"><strong>Perforce server</strong><span>Only for sync features &mdash; everything else works without one</span></div>
     </div>
   </div>
 </section>
 
 <!-- PRICING -->
-<section id="get">
+<section id="get" class="alt">
   <div class="wrap">
     <div class="sec-head rv">
       <span class="eyebrow">Get it</span>
@@ -490,6 +534,7 @@
         <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Windows installer &mdash; per-user, <strong>no admin rights</strong></li>
         <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Self-contained &mdash; no .NET or runtimes to install first</li>
         <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Built-in guide, Sanity Check and bug reporting</li>
+        <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Works with launcher engines <strong>and</strong> source builds</li>
         <li><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Open source &mdash; MIT licensed, free forever</li>
       </ul>
 
@@ -524,7 +569,7 @@
 </section>
 
 <!-- FAQ -->
-<section id="faq" class="alt">
+<section id="faq">
   <div class="wrap">
     <div class="sec-head rv">
       <span class="eyebrow">Questions</span>
@@ -533,12 +578,16 @@
     </div>
     <div class="faq">
       <details class="rv" id="faq-first">
+        <summary>Do I need a source build to use this?</summary>
+        <div class="a"><p>No. Engines installed from the Epic Games Launcher are fully supported &mdash; the app finds them automatically and hides everything that only makes sense for a source tree. Perforce sync, project rebuilds, dedicated-server builds and launching all work the same either way.</p></div>
+      </details>
+      <details class="rv">
         <summary>Does this include the Unreal Engine source code?</summary>
         <div class="a"><p>No. The source comes straight from Epic's official GitHub repository using <em>your</em> Epic-linked account, under Epic's own license. This tool automates everything around it &mdash; the downloading, dependency setup, building, syncing and launching.</p></div>
       </details>
       <details class="rv">
         <summary>Which engine versions does it work with?</summary>
-        <div class="a"><p>Any UE5 branch on Epic's GitHub: <code>release</code>, <code>5.x</code>, or <code>ue5-main</code>. You pick the branch in the app.</p></div>
+        <div class="a"><p>Any UE5 version installed from the Epic Games Launcher, and any UE5 branch on Epic's GitHub: <code>release</code>, <code>5.x</code>, or <code>ue5-main</code>. You pick the engine &mdash; or the project, and it picks the engine.</p></div>
       </details>
       <details class="rv">
         <summary>My teammates aren't build-pipeline people. Will they manage?</summary>
@@ -554,7 +603,7 @@
       </details>
       <details class="rv">
         <summary>Do I need Perforce?</summary>
-        <div class="a"><p>No. Perforce powers the sync features. Without a server you still get dependency setup, engine download, builds, and launching.</p></div>
+        <div class="a"><p>No. Perforce powers the sync, stream and changelist features. Without a server you still get dependency setup, engine setup, the project picker, builds and launching.</p></div>
       </details>
     </div>
   </div>
