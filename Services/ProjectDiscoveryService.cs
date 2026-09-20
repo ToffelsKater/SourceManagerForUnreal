@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -128,6 +128,44 @@ public static partial class ProjectDiscoveryService
         {
             return "";
         }
+    }
+
+    /// <summary>
+    /// The plugins a .uproject names, in the order the file lists them, with the state the file
+    /// gives each one ("Enabled" defaults to true when the entry leaves it out). Plugins the
+    /// project never mentions are the engine's own defaults and are not listed here.
+    /// </summary>
+    public static List<(string Name, bool Enabled)> ReadPlugins(string projectPath)
+    {
+        var plugins = new List<(string, bool)>();
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllText(projectPath), new JsonDocumentOptions
+            {
+                AllowTrailingCommas = true,
+                CommentHandling = JsonCommentHandling.Skip,
+            });
+            if (!doc.RootElement.TryGetProperty("Plugins", out var array) ||
+                array.ValueKind != JsonValueKind.Array)
+                return plugins;
+
+            foreach (var entry in array.EnumerateArray())
+            {
+                if (entry.ValueKind != JsonValueKind.Object) continue;
+                if (!entry.TryGetProperty("Name", out var name)) continue;
+                var pluginName = name.GetString()?.Trim();
+                if (string.IsNullOrEmpty(pluginName)) continue;
+
+                var enabled = !entry.TryGetProperty("Enabled", out var state) ||
+                              state.ValueKind != JsonValueKind.False;
+                plugins.Add((pluginName, enabled));
+            }
+        }
+        catch
+        {
+            // An unreadable or hand-broken .uproject just means no plugin toggles.
+        }
+        return plugins;
     }
 
     /// <summary>

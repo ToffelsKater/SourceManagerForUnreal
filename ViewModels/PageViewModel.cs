@@ -57,6 +57,12 @@ public abstract class PageViewModel : ObservableObject
     /// </summary>
     protected virtual void OnBranchChanged() => OnPropertyChanged(null);
 
+    /// <summary>
+    /// Called when this page becomes the visible one. Override to bring a page up to date with
+    /// whatever it shows from outside the app — a tab nobody is looking at goes stale.
+    /// </summary>
+    public virtual void OnActivated() { }
+
     private bool _isBusy;
     public bool IsBusy { get => _isBusy; protected set => Set(ref _isBusy, value); }
 

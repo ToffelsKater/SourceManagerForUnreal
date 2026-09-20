@@ -8,6 +8,59 @@
     <v:StringToVisibilityConverter x:Key="StrVis"/>
     <v:StringToBrushConverter x:Key="StrBrush"/>
 
+    <!-- A history row carries three lines, so the usual full-accent selection would swallow it:
+         it is marked with an accent bar and a lifted background instead. -->
+    <Style x:Key="CommitRow" TargetType="ListBoxItem">
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Padding" Value="10,7"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Row" Background="Transparent" BorderBrush="Transparent"
+                            BorderThickness="3,0,0,0" Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Row" Property="Background" Value="{StaticResource PanelBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Row" Property="Background" Value="{StaticResource PanelAltBrush}"/>
+                            <Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The file list is read, not picked from, so its rows only light up under the cursor. They
+         also stay out of the focus order: focusing a row scrolls the page to bring it into view,
+         and losing it when the row is replaced scrolls the page somewhere else again. -->
+    <Style x:Key="FileRow" TargetType="ListBoxItem">
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Padding" Value="10,3"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Row" Background="Transparent" Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Row" Property="Background" Value="{StaticResource PanelAltBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Shared status/progress strip -->
     <ControlTemplate x:Key="StatusStrip">
         <Border Background="{StaticResource PanelAltBrush}" CornerRadius="8" Padding="12,8" Margin="0,0,0,12"
@@ -98,7 +151,7 @@
                         <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="2  "/><Run FontFamily="Segoe UI Semibold" Text="GitHub access"/><Run Text=" — the engine source is in a private repository: link your GitHub account to your Epic Games account ('Link GitHub to Epic' button on the Get Source tab) and accept the invitation e-mail from GitHub. 'Test GitHub access' tells you when it works."/></TextBlock>
                         <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="3  "/><Run FontFamily="Segoe UI Semibold" Text="Get Source"/><Run Text=" — already have an engine from the Epic Games Launcher? Pick it under 'Engines found on this PC' and skip straight to step 5. For a source build, pick an engine folder (needs ~200 GB free) and a branch (e.g. 5.8, or 'release' for the latest stable), then 'Clone + Setup + Generate'. This downloads tens of GB and takes a while; the log shows progress."/></TextBlock>
                         <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="4  "/><Run FontFamily="Segoe UI Semibold" Text="Build"/><Run Text=" — target 'UnrealEditor', configuration 'Development', press Build. A clean build takes 1–3 hours depending on CPU. ShaderCompileWorker is built automatically."/></TextBlock>
-                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="5  "/><Run FontFamily="Segoe UI Semibold" Text="Perforce"/><Run Text=" — enter the team's server address, your user name and password, log in, then pick your workspace (create workspaces in P4V — button provided). Working in more than one stream? Add a branch per stream: each one remembers its own stream, workspace, project and launch arguments."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="5  "/><Run FontFamily="Segoe UI Semibold" Text="Perforce"/><Run Text=" — enter the team's server address, your user name and password, log in, then pick your workspace (create workspaces in P4V — button provided). Working in more than one stream? Add a branch per stream: each one remembers its own stream, workspace, project and launch arguments. Press 'Load history' at the bottom to see what the team has submitted to the stream lately, and which files changed."/></TextBlock>
                         <TextBlock Margin="0,3"><Run Foreground="{StaticResource AccentBrush}" Text="6  "/><Run FontFamily="Segoe UI Semibold" Text="Sync &amp; Launch"/><Run Text=" — pick your project from the list of the ones found on this PC (which also switches to the engine that project was made with), tick the steps you want, and use '🔍 Sanity check' to verify everything before the first run."/></TextBlock>
                     </StackPanel>
                 </Border>
@@ -109,7 +162,7 @@
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔧 Dependencies"/><Run Text=" — verifies Git, Perforce and Visual Studio incl. every workload Unreal needs (C++ desktop &amp; game development, MSVC v143, Windows SDK). One click installs whatever is missing."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="⬇ Get Source"/><Run Text=" — auto-detects every engine installed on the PC (Epic Games Launcher builds and source trees) and lets you pick the one the app works against. The 'Engine version' card compares the selected engine against Epic's release tags on GitHub, so you find out that 5.8.2 shipped while you are still on 5.8.0; for a cloned source tree it updates in place (checkout, Setup.bat, GenerateProjectFiles), for a launcher engine it points you at the Epic Games Launcher. For source builds it also clones Epic's UnrealEngine repository, runs Setup.bat (downloads binary dependencies) and GenerateProjectFiles.bat (creates UE5.sln). Steps can also be run individually, e.g. to re-run Setup.bat after switching branches."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔨 Build"/><Run Text=" — with a source engine, compiles any engine target (editor, ShaderCompileWorker, UnrealPak, …) in any configuration with live progress. Also creates and compiles your project's dedicated-server target — one of the main reasons to use a source build. 'Open UE5.sln' jumps into Visual Studio for engine code work. With a precompiled launcher engine the engine-build controls are hidden and only the dedicated-server section remains."/></TextBlock>
-                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔁 Perforce"/><Run Text=" — connection, login (your password is never stored — only Perforce's own session ticket), workspace selection and manual sync with force/parallel options. Branches live here too: one per stream, each holding its stream, workspace, sync path, changelist, project and launch arguments, so switching branch repoints everything at once instead of five fields by hand. 'Switch workspace' runs p4 switch on the selected stream. It also lists your pending changelists (including the default one), shows exactly which files each holds, and submits the one you pick after a confirmation naming the server, workspace and files."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔁 Perforce"/><Run Text=" — connection, login (your password is never stored — only Perforce's own session ticket), workspace selection and manual sync with force/parallel options. Branches live here too: one per stream, each holding its stream, workspace, sync path, changelist, project and launch arguments, so switching branch repoints everything at once instead of five fields by hand. 'Switch workspace' runs p4 switch on the selected stream. It also lists your pending changelists (including the default one), shows exactly which files each holds, and submits the one you pick after a confirmation naming the server, workspace and files. Below that, 'Commit history' lists what the team has already submitted to the stream, grouped by day, with the files each changelist added, edited or deleted — and a button to point the sync at any of them."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🚀 Sync &amp; Launch"/><Run Text=" — the daily-driver button: pick the branch, then sync latest from Perforce → rebuild engine → rebuild your project's modules → launch the editor. When the branch names a stream, the workspace is switched to it before syncing, so you can never sync one branch and launch another. Each step is optional; most days you only need sync + launch. On a precompiled launcher engine the engine-rebuild step is dropped and the rest renumber."/></TextBlock>
                     </StackPanel>
                 </Border>
@@ -632,6 +685,190 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Commit history" Style="{StaticResource LabelText}"/>
+                        <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="12" TextWrapping="Wrap"
+                                   Margin="0,0,0,8"
+                                   Text="What the team has submitted to this branch&apos;s stream, newest first. Pick a changelist to see every file it touched — added, edited or deleted."/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Show last" VerticalAlignment="Center"
+                                       Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,8,0"/>
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding HistoryLimits}"
+                                      SelectedItem="{Binding HistoryLimit}"/>
+                            <Button Grid.Column="3" Content="🕘  Load history" Margin="8,0,0,0"
+                                    Command="{Binding RefreshHistoryCommand}"/>
+                        </Grid>
+                        <TextBlock Text="{Binding HistoryHeader}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,8,0,6" TextWrapping="Wrap"/>
+
+                        <ListBox ItemsSource="{Binding CommitsView}" SelectedItem="{Binding SelectedCommit}"
+                                 ItemContainerStyle="{StaticResource CommitRow}"
+                                 IsSynchronizedWithCurrentItem="False" v:ScrollContainment.Contain="True"
+                                 MaxHeight="300" MinHeight="46">
+                            <ListBox.GroupStyle>
+                                <GroupStyle>
+                                    <GroupStyle.HeaderTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{StaticResource PanelAltBrush}" Padding="10,3">
+                                                <TextBlock Text="{Binding Name}" FontFamily="Segoe UI Semibold"
+                                                           FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </GroupStyle.HeaderTemplate>
+                                </GroupStyle>
+                            </ListBox.GroupStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <!-- The author's initial, so rows can be scanned by who submitted them. -->
+                                        <Border Grid.Column="0" Width="26" Height="26" CornerRadius="13"
+                                                Margin="0,1,10,0" VerticalAlignment="Top"
+                                                Background="{StaticResource PanelAltBrush}"
+                                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                            <TextBlock Text="{Binding UserInitial}" FontFamily="Segoe UI Semibold"
+                                                       FontSize="12" Foreground="{StaticResource AccentBrush}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding IdDisplay}"
+                                                           FontFamily="Consolas" FontSize="12"
+                                                           Foreground="{StaticResource AccentBrush}"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding User}" Margin="8,0,8,0"
+                                                           FontSize="12" Foreground="{StaticResource MutedBrush}"
+                                                           TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding AgoDisplay}" FontSize="11"
+                                                           Foreground="{StaticResource MutedBrush}"
+                                                           ToolTip="{Binding TimeDisplay}"/>
+                                            </Grid>
+                                            <TextBlock Text="{Binding Summary}" Margin="0,2,0,0"
+                                                       TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                                <TextBlock Text="{Binding AddedBadge}" Foreground="#5CC98C"
+                                                           FontFamily="Consolas" FontSize="11" Margin="0,0,8,0"
+                                                           Visibility="{Binding AddedBadge, Converter={StaticResource StrVis}}"/>
+                                                <TextBlock Text="{Binding EditedBadge}" Foreground="#E0A458"
+                                                           FontFamily="Consolas" FontSize="11" Margin="0,0,8,0"
+                                                           Visibility="{Binding EditedBadge, Converter={StaticResource StrVis}}"/>
+                                                <TextBlock Text="{Binding DeletedBadge}" Foreground="#E5646E"
+                                                           FontFamily="Consolas" FontSize="11" Margin="0,0,8,0"
+                                                           Visibility="{Binding DeletedBadge, Converter={StaticResource StrVis}}"/>
+                                                <TextBlock Text="{Binding FileCountDisplay}" FontSize="11"
+                                                           Foreground="{StaticResource MutedBrush}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <!-- The selected changelist in full: its description, then every file it
+                             touched. The region is a FIXED height on purpose. Its contents vary
+                             enormously between changelists — three files after three hundred — and if
+                             that fed through to the page height, every pick would move the page under
+                             the reader: a page that gets shorter has its scroll offset clamped, and a
+                             momentary collapse during the relayout clamps it all the way to the top. -->
+                        <Grid Height="380" Margin="0,12,0,0"
+                              Visibility="{Binding HasSelectedCommit, Converter={StaticResource BoolVis}}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="{Binding CommitFilesHeader}" TextWrapping="Wrap"
+                                       FontFamily="Segoe UI Semibold" Foreground="{StaticResource AccentBrush}"
+                                       FontSize="12"/>
+
+                            <Border Grid.Row="1" Background="{StaticResource PanelAltBrush}" CornerRadius="6"
+                                    Padding="10,8" Margin="0,8,0,0"
+                                    Visibility="{Binding CommitDescription, Converter={StaticResource StrVis}}">
+                                <ScrollViewer MaxHeight="110" VerticalScrollBarVisibility="Auto">
+                                    <TextBlock Text="{Binding CommitDescription}" FontSize="12" TextWrapping="Wrap"/>
+                                </ScrollViewer>
+                            </Border>
+
+                            <!-- The file list takes whatever the description left, so the two of them
+                                 together always come to the same height. -->
+                            <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                    CornerRadius="3" Margin="0,8,0,0">
+                                <ListBox ItemsSource="{Binding CommitFilesView}"
+                                         ItemContainerStyle="{StaticResource FileRow}"
+                                         IsSynchronizedWithCurrentItem="False" Focusable="False"
+                                         v:ScrollContainment.Contain="True"
+                                         BorderThickness="0">
+                                    <ListBox.GroupStyle>
+                                        <GroupStyle>
+                                            <GroupStyle.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Name}" FontFamily="Consolas"
+                                                               FontSize="11" Margin="10,8,10,2"
+                                                               Foreground="{StaticResource MutedBrush}"
+                                                               TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                                               ToolTip="{Binding Name}"/>
+                                                </DataTemplate>
+                                            </GroupStyle.HeaderTemplate>
+                                        </GroupStyle>
+                                    </ListBox.GroupStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ToolTip="{Binding DepotPath}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="16"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding ActionGlyph}"
+                                                           FontFamily="Consolas" FontSize="12"
+                                                           Foreground="{Binding ActionColor, Converter={StaticResource StrBrush}}"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding FileName}" Margin="6,0,8,0"
+                                                           FontFamily="Consolas" FontSize="12"
+                                                           TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding Action}" FontSize="11"
+                                                           Margin="0,0,8,0"
+                                                           Foreground="{Binding ActionColor, Converter={StaticResource StrBrush}}"/>
+                                                <TextBlock Grid.Column="3" Text="{Binding RevisionDisplay}"
+                                                           FontFamily="Consolas" FontSize="11" MinWidth="34"
+                                                           TextAlignment="Right"
+                                                           Foreground="{StaticResource MutedBrush}"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Border>
+
+                            <TextBlock Grid.Row="3" Text="{Binding CommitTruncationNote}"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap"
+                                       Visibility="{Binding CommitTruncationNote, Converter={StaticResource StrVis}}"/>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="⬇  Sync to this changelist" Command="{Binding SyncToCommitCommand}"/>
+                            <Button Content="Open P4V ↗" Command="{Binding OpenP4VCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
@@ -676,6 +913,25 @@
 
                         <TextBlock Text="Extra launch arguments" Style="{StaticResource LabelText}" Margin="0,10,0,3"/>
                         <TextBox Text="{Binding LaunchArgs, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}"
+                        Visibility="{Binding HasPlugins, Converter={StaticResource BoolVis}}">
+                    <StackPanel>
+                        <TextBlock Text="Plugins" Style="{StaticResource LabelText}"/>
+                        <TextBlock Text="{Binding PluginSummary}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                        <ScrollViewer MaxHeight="260" VerticalScrollBarVisibility="Auto"
+                                      v:ScrollContainment.Contain="True">
+                            <ItemsControl ItemsSource="{Binding Plugins}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Label}" IsChecked="{Binding Enabled}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                     </StackPanel>
                 </Border>
 

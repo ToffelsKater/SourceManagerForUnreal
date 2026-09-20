@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using UnrealManager.Core;
+using UnrealManager.Models;
 using UnrealManager.Services;
 
 namespace UnrealManager.ViewModels;
@@ -111,6 +112,85 @@ public sealed class SyncLaunchViewModel : ProjectPageViewModel
     /// <summary>The engine build step only ever runs against a source tree.</summary>
     private bool WillBuildEngine => StepBuild && IsSourceEngine;
 
+    /* ---- plugins: which of the project's own plugins the editor starts with ---- */
+
+    /// <summary>The plugins this project's .uproject lists, each with the user's answer for it.</summary>
+    public ObservableCollection<PluginToggle> Plugins { get; } = [];
+
+    public bool HasPlugins => Plugins.Count > 0;
+
+    public string PluginSummary =>
+        $"{Plugins.Count(p => p.Enabled)} of {Plugins.Count} plugin(s) will start. The rest are turned off on " +
+        "the editor's command line — the .uproject itself is never modified, so this works on a read-only " +
+        "Perforce file. Choices are remembered per project.";
+
+    /// <summary>
+    /// The plugin part of the editor command line: the ones switched off against the project, and
+    /// the ones switched on that the project ships disabled. Both are Unreal's own switches.
+    /// </summary>
+    private string PluginArgs
+    {
+        get
+        {
+            var on = Plugins.Where(p => p.Enabled && !p.ProjectDefault).Select(p => p.Name).ToList();
+            var off = Plugins.Where(p => !p.Enabled && p.ProjectDefault).Select(p => p.Name).ToList();
+            var args = "";
+            if (on.Count > 0) args += $"-EnablePlugins={string.Join(",", on)} ";
+            if (off.Count > 0) args += $"-DisablePlugins={string.Join(",", off)}";
+            return args.Trim();
+        }
+    }
+
+    /// <summary>One project's entry in the saved overrides — the path, lower-cased so spellings agree.</summary>
+    private static string PluginKey(string projectPath) =>
+        string.IsNullOrWhiteSpace(projectPath) ? "" : UnrealProject.Normalize(projectPath).ToLowerInvariant();
+
+    /// <summary>Re-reads the .uproject's plugin list and re-applies whatever the user chose for it.</summary>
+    private void RefreshPlugins()
+    {
+        foreach (var toggle in Plugins) toggle.Changed -= OnPluginToggled;
+        Plugins.Clear();
+
+        var path = ProjectPath;
+        if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+        {
+            var key = PluginKey(path);
+            var flipped = ConfigService.Config.PluginOverrides.TryGetValue(key, out var saved)
+                ? new HashSet<string>(saved, StringComparer.OrdinalIgnoreCase)
+                : [];
+
+            foreach (var (name, enabled) in ProjectDiscoveryService.ReadPlugins(path))
+            {
+                var toggle = new PluginToggle
+                {
+                    Name = name,
+                    ProjectDefault = enabled,
+                    Enabled = enabled ^ flipped.Contains(name),
+                };
+                toggle.Changed += OnPluginToggled;
+                Plugins.Add(toggle);
+            }
+        }
+
+        OnPropertyChanged(nameof(HasPlugins));
+        OnPropertyChanged(nameof(PluginSummary));
+    }
+
+    private void OnPluginToggled()
+    {
+        var key = PluginKey(ProjectPath);
+        if (key.Length == 0) return;
+
+        var flipped = Plugins.Where(p => p.Enabled != p.ProjectDefault).Select(p => p.Name).ToList();
+        if (flipped.Count == 0) ConfigService.Config.PluginOverrides.Remove(key);
+        else ConfigService.Config.PluginOverrides[key] = flipped;
+
+        ConfigService.Save();
+        OnPropertyChanged(nameof(PluginSummary));
+    }
+
+    protected override void OnProjectPathChanged() => RefreshPlugins();
+
     public ObservableCollection<CheckItem> SanityResults { get; } = [];
 
     public ICommand RunCommand { get; }
@@ -125,6 +205,7 @@ public sealed class SyncLaunchViewModel : ProjectPageViewModel
         CancelCommand = new RelayCommand(_ => Cancel(), _ => IsBusy);
 
         RefreshBranches();
+        RefreshPlugins();
     }
 
     protected override void OnEngineChanged()
@@ -478,10 +559,32 @@ public sealed class SyncLaunchViewModel : ProjectPageViewModel
             }
 
             StepStatus = "Step: launching UnrealEditor…";
-            EngineService.LaunchEditor(cfg.EngineRoot, ProjectPath, LaunchArgs);
+            EngineService.LaunchEditor(cfg.EngineRoot, ProjectPath, (LaunchArgs + " " + PluginArgs).Trim());
             Log("UnrealEditor launched.");
         }
 
         StepStatus = "All steps completed.";
     });
+}
+
+/// <summary>One plugin out of the .uproject, and whether the editor should start with it.</summary>
+public sealed class PluginToggle : ObservableObject
+{
+    public required string Name { get; init; }
+
+    /// <summary>What the .uproject says. Only a toggle that disagrees with it is worth saving.</summary>
+    public required bool ProjectDefault { get; init; }
+
+    private bool _enabled;
+
+    public bool Enabled
+    {
+        get => _enabled;
+        set { if (Set(ref _enabled, value)) Changed?.Invoke(); }
+    }
+
+    public string Label => ProjectDefault ? Name : Name + "   (disabled in the .uproject)";
+
+    /// <summary>Raised when the user moves the toggle, so the page can save the choice.</summary>
+    public event Action? Changed;
 }

@@ -39,6 +39,148 @@ public sealed record PendingChange(string Id, string Description)
     public int FileCount => Files.Count;
 }
 
+/// <summary>One file as a submitted changelist left it: what happened to it, and at which revision.</summary>
+public sealed record ChangedFile(string DepotPath, string Action, string Revision)
+{
+    /// <summary>The file name alone — the part a reader actually scans for.</summary>
+    public string FileName
+    {
+        get
+        {
+            var slash = DepotPath.LastIndexOf('/');
+            return slash < 0 ? DepotPath : DepotPath[(slash + 1)..];
+        }
+    }
+
+    /// <summary>The depot folder holding the file, shown under the name so the path is still there.</summary>
+    public string Folder
+    {
+        get
+        {
+            var slash = DepotPath.LastIndexOf('/');
+            return slash < 0 ? "" : DepotPath[..slash];
+        }
+    }
+
+    public string RevisionDisplay => Revision.Length == 0 ? "" : "#" + Revision;
+
+    /// <summary>A one-character stand-in for the action, so a long file list reads at a glance.</summary>
+    public string ActionGlyph => Action switch
+    {
+        "add" or "move/add" or "branch" => "+",
+        "delete" or "move/delete" or "purge" => "−",
+        "edit" or "integrate" => "~",
+        _ => "•",
+    };
+
+    /// <summary>Green for new files, red for removed ones, amber for edits — the usual diff reading.</summary>
+    public string ActionColor => Action switch
+    {
+        "add" or "move/add" or "branch" => "#5CC98C",
+        "delete" or "move/delete" or "purge" => "#E5646E",
+        "edit" => "#E0A458",
+        "integrate" => "#6BA4FF",
+        _ => "#9AA0AE",
+    };
+
+    public bool IsAdd => Action is "add" or "move/add" or "branch";
+    public bool IsDelete => Action is "delete" or "move/delete" or "purge";
+    public bool IsEdit => !IsAdd && !IsDelete;
+}
+
+/// <summary>A changelist that has already been submitted — one entry of the stream's history.</summary>
+public sealed record SubmittedChange(string Id, string User, DateTime Time, string Description)
+{
+    /// <summary>Files the changelist touched, loaded with the history so selecting one costs nothing.</summary>
+    public List<ChangedFile> Files { get; init; } = [];
+
+    /// <summary>Set when the file list was cut short; a sync-everything changelist can hold thousands.</summary>
+    public bool FilesTruncated { get; init; }
+
+    public int FileCount => Files.Count;
+    public int AddedCount => Files.Count(f => f.IsAdd);
+    public int DeletedCount => Files.Count(f => f.IsDelete);
+    public int EditedCount => Files.Count(f => f.IsEdit);
+
+    public string IdDisplay => "@" + Id;
+
+    /// <summary>First letter of the author, for the round badge that starts each row.</summary>
+    public string UserInitial => User.Length == 0 ? "?" : User[..1].ToUpperInvariant();
+
+    /// <summary>The first line of the description — the subject, in git terms.</summary>
+    public string Summary
+    {
+        get
+        {
+            var first = Description
+                .Split('\n')
+                .Select(l => l.Trim())
+                .FirstOrDefault(l => l.Length > 0);
+            return string.IsNullOrEmpty(first) ? "(no description)" : first;
+        }
+    }
+
+    /// <summary>The submit time in full, for the tooltip behind the "3 hours ago" in the row.</summary>
+    public string TimeDisplay => Time.ToString("ddd d MMM yyyy, HH:mm");
+
+    /// <summary>Header the history groups under: Today, Yesterday, then the full date.</summary>
+    public string DayGroup
+    {
+        get
+        {
+            var day = Time.Date;
+            if (day == DateTime.Today) return "Today";
+            if (day == DateTime.Today.AddDays(-1)) return "Yesterday";
+            return Time.ToString("dddd, d MMMM yyyy");
+        }
+    }
+
+    /// <summary>"3 hours ago" — how a history is usually read, rather than by timestamp.</summary>
+    public string AgoDisplay
+    {
+        get
+        {
+            var span = DateTime.Now - Time;
+            if (span.TotalMinutes < 1) return "just now";
+            if (span.TotalMinutes < 60) return Ago((int)span.TotalMinutes, "minute");
+            if (span.TotalHours < 24) return Ago((int)span.TotalHours, "hour");
+            if (span.TotalDays < 7) return Ago((int)span.TotalDays, "day");
+            if (span.TotalDays < 30) return Ago((int)(span.TotalDays / 7), "week");
+            if (span.TotalDays < 365) return Ago((int)(span.TotalDays / 30), "month");
+            return Ago((int)(span.TotalDays / 365), "year");
+        }
+    }
+
+    private static string Ago(int count, string unit) => $"{count} {unit}{(count == 1 ? "" : "s")} ago";
+
+    /// <summary>Per-action counters for the row, blank when zero so the badges stay quiet.</summary>
+    public string AddedBadge => AddedCount > 0 ? $"+{AddedCount}" : "";
+
+    public string EditedBadge => EditedCount > 0 ? $"~{EditedCount}" : "";
+
+    public string DeletedBadge => DeletedCount > 0 ? $"−{DeletedCount}" : "";
+
+    public string FileCountDisplay => FilesTruncated
+        ? $"{FileCount}+ files"
+        : $"{FileCount} file{(FileCount == 1 ? "" : "s")}";
+
+    /// <summary>"12 files — 3 added, 8 edited, 1 deleted", the row's one-line shape of the change.</summary>
+    public string FileSummary
+    {
+        get
+        {
+            if (FileCount == 0) return "no files";
+            var parts = new List<string>();
+            if (AddedCount > 0) parts.Add($"{AddedCount} added");
+            if (EditedCount > 0) parts.Add($"{EditedCount} edited");
+            if (DeletedCount > 0) parts.Add($"{DeletedCount} deleted");
+            var counted = $"{FileCount} file{(FileCount == 1 ? "" : "s")}";
+            if (FilesTruncated) counted = "first " + counted;
+            return parts.Count == 0 ? counted : $"{counted} — {string.Join(", ", parts)}";
+        }
+    }
+}
+
 public static class PerforceService
 {
     public static Task<ProcessResult> InfoAsync(P4Connection conn, Action<string> onOutput, CancellationToken ct)
@@ -309,6 +451,162 @@ public static class PerforceService
             ? $"-d \"{description.Replace("\"", "'").Replace("\r\n", " ").Replace("\n", " ")}\""
             : $"-c \"{change.Id}\"";
         return ProcessRunner.RunAsync("p4", args.Trim(), onOutput: onOutput, ct: ct);
+    }
+
+    /* ---------------------------- submitted history ---------------------------- */
+
+    /// <summary>Files kept per changelist — a "sync the whole depot" submit can hold thousands.</summary>
+    public const int MaxFilesPerChange = 500;
+
+    /// <summary>
+    /// The most recent submitted changelists under <paramref name="depotPath"/> (a stream path such as
+    /// //Game/Main, which is completed to //Game/Main/... ), newest first. Each one comes back with its
+    /// files already attached: they are fetched for the whole page in a single `p4 describe`, so
+    /// clicking through the history costs no further round trips.
+    /// </summary>
+    public static async Task<List<SubmittedChange>> ListSubmittedChangesAsync(
+        P4Connection conn, string? depotPath, int max, CancellationToken ct)
+    {
+        var args = conn.GlobalArgs(includeClient: false) + $"changes -s submitted -l -m {max}";
+        var path = NormalizeDepotPath(depotPath);
+        if (path.Length > 0) args += $" \"{path}\"";
+
+        var listed = await ProcessRunner.RunAsync("p4", "-ztag " + args, ct: ct);
+        if (!listed.Success) return [];
+
+        var changes = ParseSubmittedChanges(listed.StdOut);
+        if (changes.Count == 0) return changes;
+
+        // One describe for every changelist on the page; `-s` leaves out the diffs, keeping it to a file list.
+        var ids = string.Join(" ", changes.Select(c => c.Id));
+        var described = await ProcessRunner.RunAsync(
+            "p4", "-ztag " + conn.GlobalArgs(includeClient: false) + "describe -s " + ids, ct: ct);
+        if (!described.Success) return changes;
+
+        var files = ParseDescribedFiles(described.StdOut);
+        return changes
+            .Select(c => files.TryGetValue(c.Id, out var list)
+                ? c with
+                {
+                    Files = list.Take(MaxFilesPerChange).ToList(),
+                    FilesTruncated = list.Count > MaxFilesPerChange,
+                }
+                : c)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Turns a stream or folder into the file pattern `p4 changes` expects: //Game/Main becomes
+    /// //Game/Main/... , while a path that already ends in a wildcard is left alone.
+    /// </summary>
+    public static string NormalizeDepotPath(string? depotPath)
+    {
+        var path = (depotPath ?? "").Trim();
+        if (path.Length == 0) return "";
+        if (path.EndsWith("...") || path.EndsWith("*")) return path;
+        return path.TrimEnd('/') + "/...";
+    }
+
+    /// <summary>Reads `p4 -ztag changes -l` output into changelists, newest first as p4 lists them.</summary>
+    public static List<SubmittedChange> ParseSubmittedChanges(string stdout)
+    {
+        var changes = new List<SubmittedChange>();
+        foreach (var block in ZtagBlocks(stdout))
+        {
+            if (!block.TryGetValue("change", out var id) || id.Length == 0) continue;
+
+            // p4 reports the submit time as unix seconds; the history reads better in local time.
+            var time = long.TryParse(block.GetValueOrDefault("time"), out var epoch)
+                ? DateTimeOffset.FromUnixTimeSeconds(epoch).LocalDateTime
+                : DateTime.MinValue;
+
+            changes.Add(new SubmittedChange(
+                id,
+                block.GetValueOrDefault("user", "").Trim(),
+                time,
+                block.GetValueOrDefault("desc", "").Trim()));
+        }
+
+        return changes;
+    }
+
+    /// <summary>
+    /// Reads `p4 -ztag describe -s` output into a file list per changelist. Fields are numbered per
+    /// file (depotFile0, action0, rev0…), so they are gathered by that index before being paired up.
+    /// </summary>
+    public static Dictionary<string, List<ChangedFile>> ParseDescribedFiles(string stdout)
+    {
+        var byChange = new Dictionary<string, List<ChangedFile>>(StringComparer.Ordinal);
+
+        foreach (var block in ZtagBlocks(stdout))
+        {
+            if (!block.TryGetValue("change", out var id) || id.Length == 0) continue;
+
+            var paths = new SortedDictionary<int, string>();
+            var actions = new Dictionary<int, string>();
+            var revisions = new Dictionary<int, string>();
+
+            foreach (var (key, value) in block)
+            {
+                if (TryIndexedField(key, "depotFile", out var pathIndex)) paths[pathIndex] = value.Trim();
+                else if (TryIndexedField(key, "action", out var actionIndex)) actions[actionIndex] = value.Trim();
+                else if (TryIndexedField(key, "rev", out var revIndex)) revisions[revIndex] = value.Trim();
+            }
+
+            byChange[id] = paths
+                .Select(p => new ChangedFile(
+                    p.Value,
+                    actions.GetValueOrDefault(p.Key, ""),
+                    revisions.GetValueOrDefault(p.Key, "")))
+                .ToList();
+        }
+
+        return byChange;
+    }
+
+    /// <summary>Matches a numbered ztag field such as "depotFile12" and hands back the 12.</summary>
+    private static bool TryIndexedField(string key, string prefix, out int index)
+    {
+        index = 0;
+        if (!key.StartsWith(prefix, StringComparison.Ordinal)) return false;
+        var digits = key[prefix.Length..];
+        return digits.Length > 0 && int.TryParse(digits, out index);
+    }
+
+    /// <summary>
+    /// Splits `p4 -ztag` output into one field bag per changelist. Every field is written as
+    /// "... name value", and a value running over several lines (a description) continues on the
+    /// lines after it, so anything unprefixed is appended to the field last seen.
+    /// </summary>
+    public static IEnumerable<Dictionary<string, string>> ZtagBlocks(string stdout)
+    {
+        Dictionary<string, string>? block = null;
+        string? field = null;
+
+        foreach (var raw in stdout.Split('\n'))
+        {
+            var line = raw.TrimEnd('\r');
+            if (line.StartsWith("... ", StringComparison.Ordinal))
+            {
+                var body = line[4..];
+                var space = body.IndexOf(' ');
+                var key = space < 0 ? body : body[..space];
+                var value = space < 0 ? "" : body[(space + 1)..];
+
+                // "change" is the first field of every record, so it is what starts a new one.
+                if (key == "change" && block is not null) { yield return block; block = null; }
+
+                block ??= new Dictionary<string, string>(StringComparer.Ordinal);
+                block[key] = value;
+                field = key;
+            }
+            else if (block is not null && field is not null)
+            {
+                block[field] += "\n" + line;
+            }
+        }
+
+        if (block is not null) yield return block;
     }
 
     public static void OpenP4V(P4Connection conn)

@@ -12,7 +12,7 @@ public sealed class MainViewModel : ObservableObject
     public PageViewModel CurrentPage
     {
         get => _currentPage;
-        set => Set(ref _currentPage, value);
+        set { if (Set(ref _currentPage, value)) value?.OnActivated(); }
     }
 
     public ICommand SelectCommand { get; }

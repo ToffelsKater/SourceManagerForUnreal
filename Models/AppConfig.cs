@@ -33,6 +33,14 @@ public sealed class AppConfig
     public bool StepLaunch { get; set; } = true;
     public string ProjectPath { get; set; } = "";
     public string LaunchArgs { get; set; } = "";
+
+    /// <summary>
+    /// Per project (full .uproject path, lower-cased), the plugins whose toggle the user moved away
+    /// from the state the .uproject gives them. Storing the difference rather than the whole list
+    /// means a plugin added to the project later arrives with the project's own setting.
+    /// </summary>
+    public Dictionary<string, List<string>> PluginOverrides { get; set; } = [];
+
     public string ServerLaunchArgs { get; set; } = "-log";
 
     // Branches: the Perforce fields above are the *active* branch's values, kept in sync by ConfigService.
