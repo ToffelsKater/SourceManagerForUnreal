@@ -29,6 +29,12 @@ The app opens on a built-in step-by-step guide. On a **completely fresh Windows 
 
 **5️⃣ Sync & Launch** — the daily-driver button: pull latest → rebuild engine → rebuild your project's modules → open the editor. Every step toggleable. Most mornings you'll use exactly one click.
 
+## 🧩 Start the editor with only the plugins you need
+
+Source Manager reads your `.uproject` and lists **every plugin it names as a toggle**. Switch off the ones this session doesn't need — the heavy one that costs you a minute of startup, or the one you suspect is breaking the editor — and launch without them.
+
+Your `.uproject` is never modified. The choices ride along on the editor's own command line, so this works on a file checked into Perforce and read-only on disk: nothing to check out, nothing to revert, and your teammates see no change. Each project remembers what you picked, stored as the difference from the project's own settings — so a plugin added to the project later arrives switched on, the way the project intends.
+
 ## 📂 Pick your project — the engine follows
 
 No more typing paths, and no more opening a 5.7 project against your 5.8 engine.
@@ -47,6 +53,9 @@ Sync & Launch puts the workspace on that branch's stream **before** syncing, so 
 - `p4 switch` onto a stream from a dropdown
 - See your pending changelists and every file each one holds
 - Submit the one you pick, behind a confirmation naming the server, workspace and files
+- Read the submitted history of your stream, grouped by day, with each changelist's files by depot folder and add/edit/delete marked
+- "Sync to this changelist" points the sync fields at the one you're reading, so one click puts the workspace in that exact state
+- Opening the tab — or logging in — reloads workspaces, streams, pending changelists and history in one go, so you're never reading yesterday's lists
 
 ## 🖥️ Dedicated servers, one click
 
@@ -90,6 +99,9 @@ Any UE5 branch on Epic's GitHub (release, 5.x, ue5-main), and any launcher-insta
 
 **My teammates aren't build-pipeline people. Will they manage?**
 That's exactly who this is for. Install → follow the built-in guide → click the buttons in order.
+
+**Does switching plugins off change my project?**
+No. Your `.uproject` is never written to — the plugins you switch off are passed to the editor on its command line for that launch only. Nothing is checked out, nothing to revert, and your picks are remembered per project on your own machine.
 
 **Windows shows "Windows protected your PC"?**
 It's an unsigned community tool — click "More info → Run anyway". The code does nothing your own terminal wouldn't: it drives Epic's official scripts, git, and p4.

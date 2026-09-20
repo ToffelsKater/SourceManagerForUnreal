@@ -264,6 +264,7 @@
     </a>
     <nav aria-label="Page sections">
       <a href="#how">How it works</a>
+      <a href="#plugins">Plugins</a>
       <a href="#features">Features</a>
       <a href="#requirements">Requirements</a>
       <a href="#faq">FAQ</a>
@@ -385,11 +386,42 @@
   </div>
 </section>
 
-<!-- PROJECT PICKER SPOTLIGHT -->
-<section id="projects" class="alt">
+<!-- PLUGIN TOGGLES SPOTLIGHT -->
+<section id="plugins" class="alt">
   <div class="wrap spot">
     <div class="rv">
-      <span class="eyebrow">New in v1.3</span>
+      <span class="eyebrow">New in v1.4</span>
+      <h2>Start the editor with only the plugins you need</h2>
+      <p style="color:var(--muted)">
+        Source Manager reads your <code>.uproject</code> and lists every plugin it names as a toggle.
+        Switch off the ones this session does not need &mdash; the heavy one that costs you a minute of
+        startup, or the one you suspect is breaking the editor &mdash; and launch without them.
+      </p>
+      <p style="color:var(--muted)">
+        Your <code>.uproject</code> is never modified. The choices are passed to the editor on its own
+        command line, so this works on a file checked into Perforce and read-only on disk. Each project
+        remembers what you picked, stored as the difference from the project's own settings &mdash; a plugin
+        added to the project later arrives switched on, the way the project intends.
+      </p>
+      <button class="btn btn-primary js-free" type="button">Download free</button>
+    </div>
+    <div class="card-mock rv" role="img"
+         aria-label="Plugin list from the project file: Niagara, Water and ModelingToolsEditorMode on, ChaosVehiclesPlugin and OnlineSubsystemSteam switched off, with a status line saying three of five plugins will start.">
+      <div class="chk"><span class="g g-ok" aria-hidden="true">&#10003;</span> Niagara <span class="m">on &mdash; from the project</span></div>
+      <div class="chk"><span class="g g-ok" aria-hidden="true">&#10003;</span> Water <span class="m">on &mdash; from the project</span></div>
+      <div class="chk"><span class="g g-ok" aria-hidden="true">&#10003;</span> ModelingToolsEditorMode <span class="m">on &mdash; from the project</span></div>
+      <div class="chk"><span class="g g-bad" aria-hidden="true">&times;</span> ChaosVehiclesPlugin <span class="m">off for this launch</span></div>
+      <div class="chk"><span class="g g-bad" aria-hidden="true">&times;</span> OnlineSubsystemSteam <span class="m">off for this launch</span></div>
+      <div class="mock-status">3 of 5 plugins will start &mdash; the rest are switched off on the command line, your .uproject is untouched.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECT PICKER SPOTLIGHT -->
+<section id="projects">
+  <div class="wrap spot">
+    <div class="rv">
+      <span class="eyebrow">Project picker</span>
       <h2>Pick your project &mdash; the engine follows</h2>
       <p style="color:var(--muted)">
         No typing paths, and no opening a 5.7 project against your 5.8 engine. Source Manager finds the
@@ -415,7 +447,7 @@
 </section>
 
 <!-- SANITY SPOTLIGHT -->
-<section>
+<section class="alt">
   <div class="wrap spot">
     <div class="rv">
       <span class="eyebrow">Sanity check</span>
@@ -443,7 +475,7 @@
 </section>
 
 <!-- FEATURES -->
-<section id="features" class="alt">
+<section id="features">
   <div class="wrap">
     <div class="sec-head rv">
       <span class="eyebrow">What's inside</span>
@@ -469,7 +501,7 @@
       <div class="feat rv">
         <div class="ico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></div>
         <h3>Perforce, properly</h3>
-        <p>Login, workspace picker, parallel sync, stream switching, pending changelists and submit. Passwords never touch disk &mdash; only P4's own ticket.</p>
+        <p>Login, workspace picker, parallel sync, stream switching, pending changelists and submit, plus the submitted history of your stream grouped by day. Opening the tab reloads all of it, so you are never reading yesterday's lists. Passwords never touch disk &mdash; only P4's own ticket.</p>
       </div>
       <div class="feat rv">
         <div class="ico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg></div>
@@ -501,7 +533,7 @@
 </section>
 
 <!-- REQUIREMENTS -->
-<section id="requirements">
+<section id="requirements" class="alt">
   <div class="wrap">
     <div class="sec-head rv">
       <span class="eyebrow">Before you start</span>
@@ -518,7 +550,7 @@
 </section>
 
 <!-- PRICING -->
-<section id="get" class="alt">
+<section id="get">
   <div class="wrap">
     <div class="sec-head rv">
       <span class="eyebrow">Get it</span>
@@ -569,7 +601,7 @@
 </section>
 
 <!-- FAQ -->
-<section id="faq">
+<section id="faq" class="alt">
   <div class="wrap">
     <div class="sec-head rv">
       <span class="eyebrow">Questions</span>
@@ -600,6 +632,10 @@
       <details class="rv">
         <summary>Is it really free, or is there a catch?</summary>
         <div class="a"><p>Really free, forever. It's pay-what-you-want with a &euro;0 minimum &mdash; enter nothing and download. If it saves your team a day, a tip is welcome but never required.</p></div>
+      </details>
+      <details class="rv">
+        <summary>Does switching plugins off change my project?</summary>
+        <div class="a"><p>No. Your <code>.uproject</code> is never written to &mdash; the plugins you switch off are passed to the editor on its command line for that launch only. Nothing is checked out, nothing to revert, and teammates see no change. Your picks are remembered per project on your own machine.</p></div>
       </details>
       <details class="rv">
         <summary>Do I need Perforce?</summary>
