@@ -411,8 +411,7 @@ public sealed class SourceViewModel : PageViewModel
             Status = "Could not list branches (check GitHub access).";
             return;
         }
-        Branches.Clear();
-        foreach (var b in branches) Branches.Add(b);
+        Refill(Branches, branches, Branch);
         Status = $"Found {branches.Count} branches.";
     });
 

@@ -43,6 +43,10 @@ public sealed class AppConfig
 
     public string ServerLaunchArgs { get; set; } = "-log";
 
+    // Create Project: the folder new projects go into — the editor's own default to start with.
+    public string NewProjectLocation { get; set; } = System.IO.Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Unreal Projects");
+
     // Branches: the Perforce fields above are the *active* branch's values, kept in sync by ConfigService.
     public List<BranchProfile> Branches { get; set; } = [];
     public string ActiveBranch { get; set; } = "";

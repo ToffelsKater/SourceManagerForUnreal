@@ -27,6 +27,7 @@ public sealed class MainViewModel : ObservableObject
             new DependenciesViewModel(),
             new SourceViewModel(),
             new BuildViewModel(),
+            new CreateProjectViewModel(),
             new PerforceViewModel(),
             new SyncLaunchViewModel(),
         ];

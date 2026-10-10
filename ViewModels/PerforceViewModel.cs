@@ -421,8 +421,7 @@ public sealed class PerforceViewModel : PageViewModel
     private async Task<int> LoadClientsAsync(CancellationToken ct)
     {
         var clients = await PerforceService.ListClientsAsync(Conn, ct);
-        Clients.Clear();
-        foreach (var c in clients) Clients.Add(c);
+        Refill(Clients, clients, Client);
         return clients.Count;
     }
 
@@ -443,8 +442,7 @@ public sealed class PerforceViewModel : PageViewModel
     private async Task<int> LoadStreamsAsync(CancellationToken ct)
     {
         var streams = await PerforceService.ListStreamsAsync(Conn, ct);
-        Streams.Clear();
-        foreach (var s in streams) Streams.Add(s);
+        Refill(Streams, streams, Stream);
 
         CurrentStream = string.IsNullOrWhiteSpace(Client)
             ? ""

@@ -162,6 +162,7 @@
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔧 Dependencies"/><Run Text=" — verifies Git, Perforce and Visual Studio incl. every workload Unreal needs (C++ desktop &amp; game development, MSVC v143, Windows SDK). One click installs whatever is missing."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="⬇ Get Source"/><Run Text=" — auto-detects every engine installed on the PC (Epic Games Launcher builds and source trees) and lets you pick the one the app works against. The 'Engine version' card compares the selected engine against Epic's release tags on GitHub, so you find out that 5.8.2 shipped while you are still on 5.8.0; for a cloned source tree it updates in place (checkout, Setup.bat, GenerateProjectFiles), for a launcher engine it points you at the Epic Games Launcher. For source builds it also clones Epic's UnrealEngine repository, runs Setup.bat (downloads binary dependencies) and GenerateProjectFiles.bat (creates UE5.sln). Steps can also be run individually, e.g. to re-run Setup.bat after switching branches."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔨 Build"/><Run Text=" — with a source engine, compiles any engine target (editor, ShaderCompileWorker, UnrealPak, …) in any configuration with live progress. Also creates and compiles your project's dedicated-server target — one of the main reasons to use a source build. 'Open UE5.sln' jumps into Visual Studio for engine code work. With a precompiled launcher engine the engine-build controls are hidden and only the dedicated-server section remains."/></TextBlock>
+                        <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="✨ Create Project"/><Run Text=" — starts a new project from any template the selected engine ships (Blank, Third Person, First Person, … in Blueprint or C++). It copies the template the way the editor's New Project dialog does — renaming its modules and classes, adding the shared content packs it needs — then makes the new project the selected one on every tab. C++ projects get their Visual Studio files generated, and are compiled before the editor opens them."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🔁 Perforce"/><Run Text=" — connection, login (your password is never stored — only Perforce's own session ticket), workspace selection and manual sync with force/parallel options. Branches live here too: one per stream, each holding its stream, workspace, sync path, changelist, project and launch arguments, so switching branch repoints everything at once instead of five fields by hand. 'Switch workspace' runs p4 switch on the selected stream. It also lists your pending changelists (including the default one), shows exactly which files each holds, and submits the one you pick after a confirmation naming the server, workspace and files. Below that, 'Commit history' lists what the team has already submitted to the stream, grouped by day, with the files each changelist added, edited or deleted — and a button to point the sync at any of them."/></TextBlock>
                         <TextBlock Margin="0,3"><Run FontFamily="Segoe UI Semibold" Text="🚀 Sync &amp; Launch"/><Run Text=" — the daily-driver button: pick the branch, then sync latest from Perforce → rebuild engine → rebuild your project's modules → launch the editor. When the branch names a stream, the workspace is switched to it before syncing, so you can never sync one branch and launch another. Each step is optional; most days you only need sync + launch. On a precompiled launcher engine the engine-rebuild step is dropped and the rest renumber."/></TextBlock>
                     </StackPanel>
@@ -486,6 +487,66 @@
                                     Command="{Binding BuildServerCommand}"/>
                             <Button Content="▶  Launch server" Command="{Binding LaunchServerCommand}"/>
                             <Button Content="Open output folder" Command="{Binding OpenServerOutputCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!-- ============================ CREATE PROJECT ============================ -->
+    <DataTemplate DataType="{x:Type vm:CreateProjectViewModel}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="4">
+                <TextBlock Text="Create Project" Style="{StaticResource HeaderText}"/>
+                <TextBlock Style="{StaticResource SubHeaderText}"
+                           Text="Start a new project from one of the selected engine's templates — copied, renamed and wired up the way the editor's New Project dialog does it."/>
+
+                <Control Template="{StaticResource StatusStrip}"/>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding EngineSummary}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                        <TextBlock Text="Template" Style="{StaticResource LabelText}"/>
+                        <ComboBox ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedTemplate}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Display}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Text="{Binding SelectedTemplate.Description}" TextWrapping="Wrap" FontSize="12.5"
+                                   Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding TemplateSummary}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Project name" Style="{StaticResource LabelText}"/>
+                        <TextBox Text="{Binding ProjectName, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock Text="Location" Style="{StaticResource LabelText}" Margin="0,10,0,3"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button Grid.Column="1" Content="Browse…" Command="{Binding BrowseCommand}" Margin="8,0,0,0"/>
+                        </Grid>
+                        <TextBlock Text="{Binding TargetSummary}" Foreground="{StaticResource MutedBrush}"
+                                   FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"/>
+
+                        <CheckBox Content="Open in the editor when done (C++ projects are compiled first)"
+                                  IsChecked="{Binding OpenWhenDone}" Margin="0,12,0,0"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="✨  Create project" Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding CreateCommand}"/>
+                            <Button Content="✖ Cancel" Command="{Binding CancelCommand}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>

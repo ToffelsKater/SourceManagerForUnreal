@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using UnrealManager.Core;
 using UnrealManager.Services;
 
@@ -73,6 +74,23 @@ public abstract class PageViewModel : ObservableObject
 
     protected static void Log(string line) => LogService.Instance.Log(line);
     protected static void LogHeader(string title) => LogService.Instance.LogHeader(title);
+
+    /// <summary>
+    /// Refills the list behind an editable ComboBox in place. Clearing it would drop the combo's
+    /// selected item, and an editable combo then blanks its text — writing "" back into the bound
+    /// setting (the saved workspace, stream or branch) on every refresh. So entries are only added
+    /// and removed, and the one matching <paramref name="current"/> stays even when the server
+    /// leaves it out.
+    /// </summary>
+    protected static void Refill(ObservableCollection<string> list, IReadOnlyCollection<string> items, string current)
+    {
+        for (var i = list.Count - 1; i >= 0; i--)
+            if (!items.Contains(list[i]) && !string.Equals(list[i], current, StringComparison.OrdinalIgnoreCase))
+                list.RemoveAt(i);
+
+        foreach (var item in items)
+            if (!list.Contains(item)) list.Add(item);
+    }
 
     public void Cancel() => Cts?.Cancel();
 

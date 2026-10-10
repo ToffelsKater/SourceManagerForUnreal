@@ -47,13 +47,14 @@ Team members just double-click **`SourceManagerSetup.exe`**:
 Each user's settings live in their own `%AppData%\UnrealManager\config.json`.
 Silent deployment (e.g. via a software-distribution tool): `SourceManagerSetup.exe /VERYSILENT /NORESTART`.
 
-## The five tabs
+## The six tabs
 
 | Tab | What it does |
 |-----|--------------|
 | **Dependencies** | Detects Visual Studio instances and verifies every workload/component Unreal needs (Desktop C++, Game C++, MSVC v143, Windows SDK, .NET). One click launches the VS Installer to add what's missing, or installs VS 2022 Community via winget. Also checks Git / p4 / p4v / dotnet on PATH. |
 | **Get Source** | Tests GitHub access, lists branches, clones the repo, runs `Setup.bat` (binary dependencies) and `GenerateProjectFiles.bat` — individually or all in one click. Shows disk‑space warnings. |
 | **Build** | Compiles any engine target (UnrealEditor, ShaderCompileWorker, …) in any configuration via `Build.bat`, with a live progress bar parsed from `[n/total]` compiler output. |
+| **Create Project** | Creates a new project from any template the selected engine ships (Blank, Third Person, First Person, … in Blueprint or C++), copying it the way the editor's New Project dialog does: `TemplateDefs.ini` ignores and renames, shared content packs, module/class redirects, a fresh `ProjectID` and the right `EngineAssociation`. C++ projects get project files generated and are compiled before the editor opens them. |
 | **Perforce** | Connects to a Helix Core server, logs in (password piped to `p4 login` stdin — never stored), lists workspaces and streams, and syncs with optional force/parallel, optionally pinned to a changelist or label. Manages **branches** — one per stream, each holding its own stream, workspace, sync path, project and launch arguments — and switches the workspace between streams with `p4 switch`. Lists pending changelists with their open files and submits the selected one (`p4 submit`), after a confirmation showing server, workspace and file list. Launches P4V. |
 | **Sync & Launch** | The UGS‑style workflow: pick a branch, then sync latest from Perforce → rebuild changed engine code → launch the editor, each step toggleable. The project is picked from a list of the `.uproject`s found on this PC (recent projects, the Unreal Projects folder and a bounded sweep of the fixed drives), and picking one switches the app to the engine that project's `EngineAssociation` names. A branch that names a stream switches the workspace onto it before syncing, so one branch is never synced and another launched. |
 
