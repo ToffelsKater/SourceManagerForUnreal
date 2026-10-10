@@ -29,6 +29,12 @@ The app opens on a built-in step-by-step guide. On a **completely fresh Windows 
 
 **5️⃣ Sync & Launch** — the daily-driver button: pull latest → rebuild engine → rebuild your project's modules → open the editor. Every step toggleable. Most mornings you'll use exactly one click.
 
+## ✨ New projects, without opening the editor first
+
+Pick any template your engine ships — Blank, Third Person, First Person, Top Down, Vehicle and the rest, in Blueprint or C++ — type a name and press **Create**. The new project becomes the selected one on every tab, ready for Sync & Launch.
+
+It's built the way the editor's own New Project dialog builds it: the template's module and classes renamed to yours, its shared characters, input and level-prototyping content pulled in, and redirects so its Blueprints still find their C++ parents. The project points at the engine you picked, and a C++ project gets its Visual Studio files and a first compile before the editor opens it.
+
 ## 🧩 Start the editor with only the plugins you need
 
 Source Manager reads your `.uproject` and lists **every plugin it names as a toggle**. Switch off the ones this session doesn't need — the heavy one that costs you a minute of startup, or the one you suspect is breaking the editor — and launch without them.
@@ -99,6 +105,9 @@ Any UE5 branch on Epic's GitHub (release, 5.x, ue5-main), and any launcher-insta
 
 **My teammates aren't build-pipeline people. Will they manage?**
 That's exactly who this is for. Install → follow the built-in guide → click the buttons in order.
+
+**Is a project made here the same as one from the editor?**
+Yes. It uses the same templates from your engine's `Templates` folder and follows the same rules the editor's New Project dialog does — renamed module and classes, the shared content packs, the redirects and a fresh project ID. Open it in the editor afterwards and it's just a project.
 
 **Does switching plugins off change my project?**
 No. Your `.uproject` is never written to — the plugins you switch off are passed to the editor on its command line for that launch only. Nothing is checked out, nothing to revert, and your picks are remembered per project on your own machine.

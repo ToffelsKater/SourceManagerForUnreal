@@ -264,6 +264,7 @@
     </a>
     <nav aria-label="Page sections">
       <a href="#how">How it works</a>
+      <a href="#create">New projects</a>
       <a href="#plugins">Plugins</a>
       <a href="#features">Features</a>
       <a href="#requirements">Requirements</a>
@@ -290,7 +291,7 @@
       <h1><span data-gumroad-field="name">Source Manager for Unreal Engine</span></h1>
       <p class="lede">
         From an <strong>empty PC</strong> to a <span class="hl" style="font-weight:700">running Unreal Editor</span> &mdash;
-        dependencies, engine setup, project builds, Perforce sync and launch, all reduced to buttons you click in order.
+        dependencies, engine setup, new projects, builds, Perforce sync and launch, all reduced to buttons you click in order.
         Works with <strong>launcher engines and source builds</strong> alike. No build engineer required.
       </p>
       <div class="cta-row">
@@ -386,11 +387,42 @@
   </div>
 </section>
 
-<!-- PLUGIN TOGGLES SPOTLIGHT -->
-<section id="plugins" class="alt">
+<!-- CREATE PROJECT SPOTLIGHT -->
+<section id="create" class="alt">
   <div class="wrap spot">
     <div class="rv">
-      <span class="eyebrow">New in v1.4</span>
+      <span class="eyebrow">New in v1.5</span>
+      <h2>Start a new project without opening the editor</h2>
+      <p style="color:var(--muted)">
+        Pick any template your engine ships &mdash; Blank, Third Person, First Person, Top Down, Vehicle and the
+        rest, in Blueprint or C++ &mdash; type a name and press Create. The new project becomes the selected one
+        on every tab, ready for Sync &amp; Launch.
+      </p>
+      <p style="color:var(--muted)">
+        It is built the way the editor's own New Project dialog builds it: the template's module and classes
+        renamed to yours, its shared characters, input and level-prototyping content pulled in, and redirects so
+        its Blueprints still find their C++ parents. The project points at the engine you picked, and a C++
+        project gets its Visual Studio files and a first compile before the editor opens it.
+      </p>
+      <button class="btn btn-primary js-free" type="button">Download free</button>
+    </div>
+    <div class="card-mock rv" role="img"
+         aria-label="Project creation steps for MyGame from the Third Person C++ template: template copied, shared content packs added, names and redirects updated, project files generated, editor compiled. Status: MyGame created and opened in the editor.">
+      <div class="chk"><span class="g g-ok" aria-hidden="true">&#10003;</span> Template copied <span class="m">Third Person (C++)</span></div>
+      <div class="chk"><span class="g g-ok" aria-hidden="true">&#10003;</span> Shared content <span class="m">Characters, Input, Levels</span></div>
+      <div class="chk"><span class="g g-ok" aria-hidden="true">&#10003;</span> Renamed to MyGame <span class="m">module, classes, redirects</span></div>
+      <div class="chk"><span class="g g-ok" aria-hidden="true">&#10003;</span> Project files <span class="m">MyGame.sln</span></div>
+      <div class="chk"><span class="g g-ok" aria-hidden="true">&#10003;</span> MyGameEditor compiled <span class="m">Development</span></div>
+      <div class="mock-status">MyGame created and opened in the editor &mdash; now the selected project on every tab.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PLUGIN TOGGLES SPOTLIGHT -->
+<section id="plugins">
+  <div class="wrap spot">
+    <div class="rv">
+      <span class="eyebrow">Plugin toggles</span>
       <h2>Start the editor with only the plugins you need</h2>
       <p style="color:var(--muted)">
         Source Manager reads your <code>.uproject</code> and lists every plugin it names as a toggle.
@@ -418,7 +450,7 @@
 </section>
 
 <!-- PROJECT PICKER SPOTLIGHT -->
-<section id="projects">
+<section id="projects" class="alt">
   <div class="wrap spot">
     <div class="rv">
       <span class="eyebrow">Project picker</span>
@@ -447,7 +479,7 @@
 </section>
 
 <!-- SANITY SPOTLIGHT -->
-<section class="alt">
+<section>
   <div class="wrap spot">
     <div class="rv">
       <span class="eyebrow">Sanity check</span>
@@ -475,7 +507,7 @@
 </section>
 
 <!-- FEATURES -->
-<section id="features">
+<section id="features" class="alt">
   <div class="wrap">
     <div class="sec-head rv">
       <span class="eyebrow">What's inside</span>
@@ -533,7 +565,7 @@
 </section>
 
 <!-- REQUIREMENTS -->
-<section id="requirements" class="alt">
+<section id="requirements">
   <div class="wrap">
     <div class="sec-head rv">
       <span class="eyebrow">Before you start</span>
@@ -550,7 +582,7 @@
 </section>
 
 <!-- PRICING -->
-<section id="get">
+<section id="get" class="alt">
   <div class="wrap">
     <div class="sec-head rv">
       <span class="eyebrow">Get it</span>
@@ -601,7 +633,7 @@
 </section>
 
 <!-- FAQ -->
-<section id="faq" class="alt">
+<section id="faq">
   <div class="wrap">
     <div class="sec-head rv">
       <span class="eyebrow">Questions</span>
@@ -632,6 +664,10 @@
       <details class="rv">
         <summary>Is it really free, or is there a catch?</summary>
         <div class="a"><p>Really free, forever. It's pay-what-you-want with a &euro;0 minimum &mdash; enter nothing and download. If it saves your team a day, a tip is welcome but never required.</p></div>
+      </details>
+      <details class="rv">
+        <summary>Is a project made here the same as one from the editor?</summary>
+        <div class="a"><p>Yes. It uses the same templates from your engine's <code>Templates</code> folder and follows the same rules the editor's New Project dialog does &mdash; renamed module and classes, the shared content packs, the redirects and a fresh project ID. Open it in the editor afterwards and it is just a project.</p></div>
       </details>
       <details class="rv">
         <summary>Does switching plugins off change my project?</summary>
